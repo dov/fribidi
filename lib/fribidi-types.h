@@ -118,7 +118,7 @@
 #endif /* FRIBIDI_STR_INDEX */
 
 
-typedef FRIBIDI_UINT8 fribidi_int8;
+typedef FRIBIDI_INT8 fribidi_int8;
 typedef FRIBIDI_INT16 fribidi_int16;
 typedef FRIBIDI_INT32 fribidi_int32;
 typedef FRIBIDI_UINT8 fribidi_uint8;

@@ -37,6 +37,7 @@
 
 #include <fribidi-bidi.h>
 #include <fribidi-mirroring.h>
+#include <fribidi-brackets.h>
 #include <fribidi-unicode.h>
 
 #include "bidi-types.h"
@@ -103,8 +104,7 @@ compact_neutrals (
       {
 	if (RL_LEVEL (list->prev) == RL_LEVEL (list)
 	    &&
-	    ((RL_TYPE
-	      (list->prev) == RL_TYPE (list)
+	    ((RL_TYPE (list->prev) == RL_TYPE (list)
 	      || (FRIBIDI_IS_NEUTRAL (RL_TYPE (list->prev))
 		  && FRIBIDI_IS_NEUTRAL (RL_TYPE (list))))))
 	  list = merge_with_prev (list);
@@ -853,6 +853,15 @@ fribidi_get_par_embedding_levels (
 # endif	/* DEBUG */
 
   /* 5. Resolving Neutral Types */
+
+  /* Plan:
+     1. Create an isolating sequence tree for iterating over each isolating sequence.
+     2. Loop over each isolating sequence at a time.
+     3. Loop over the run list and create the bracket pair stack according to BD16. This will also cause all brackets to be split into separate runs.
+     4. Change embedding levels of bracket pairs according to N0.
+     5. Compact back.
+  */
+
   DBG ("resolving neutral types");
   {
     /* N1. and N2.

@@ -42,6 +42,7 @@
 #include "fribidi-joining-types.h"
 #include "fribidi-joining.h"
 #include "fribidi-mirroring.h"
+#include "fribidi-brackets.h"
 #include "fribidi-arabic.h"
 #include "fribidi-shape.h"
 

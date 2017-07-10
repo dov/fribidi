@@ -55,6 +55,11 @@ struct _FriBidiRunStruct
   FriBidiCharType type;
   FriBidiLevel level;
   FriBidiLevel isolate_level;
+
+  /* Additional links for connecting the isolate tree */
+  FriBidiRun *next_isolate;  /* next node of the same isolate level.
+                                Only non-null if next is of a higher
+                                isolate level. */
 };
 
 

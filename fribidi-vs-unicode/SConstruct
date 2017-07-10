@@ -14,3 +14,20 @@ env.Program('test',
 env.Program('test-character',
             ['test-character.c'],
             )
+
+env.Program('bd16',
+            ['bd16.c'])
+
+env.Program('bd16-v1',
+            ['bd16-v1.c',
+             '../lib/fribidi-brackets.c'],
+            CPPPATH=['../lib'] + env['CPPPATH'],
+            CPPDEFINES=['HAVE_STRINGIZE=1',
+                        'HAVE_STDINT_H=1'])
+
+env.Program('test-bracketing',
+            ['test-bracketing.c',
+             '../lib/fribidi-brackets.c'],
+            CPPPATH=['../lib'] + env['CPPPATH'],
+            CPPDEFINES=['HAVE_STRINGIZE=1',
+                        'HAVE_STDINT_H=1'])

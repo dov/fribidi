@@ -53,7 +53,7 @@ new_run (
     (run)
     {
       run->len = run->pos = run->level = run->isolate_level = 0;
-      run->next = run->prev = NULL;
+      run->next = run->prev = run->next_isolate = NULL;
     }
   return run;
 }
