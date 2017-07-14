@@ -15,19 +15,29 @@ env.Program('test-character',
             ['test-character.c'],
             )
 
-env.Program('bd16',
-            ['bd16.c'])
+env.Program('test-bd16',
+            ['bd16.c',
+             'test-bd16.c'])
 
-env.Program('bd16-v1',
+env.Program('test-bd16-v1',
             ['bd16-v1.c',
-             '../lib/fribidi-brackets.c'],
+             'test-bd16-v1.c'],
             CPPPATH=['../lib'] + env['CPPPATH'],
             CPPDEFINES=['HAVE_STRINGIZE=1',
-                        'HAVE_STDINT_H=1'])
+                        'HAVE_STDINT_H=1'],
+            LIBS = ['fribidi','glib-2.0'])
 
 env.Program('test-bracketing',
             ['test-bracketing.c',
              '../lib/fribidi-brackets.c'],
             CPPPATH=['../lib'] + env['CPPPATH'],
             CPPDEFINES=['HAVE_STRINGIZE=1',
-                        'HAVE_STDINT_H=1'])
+                        'HAVE_STDINT_H=1']
+            )
+
+env.Program('test-algo-n0',
+            ['bd16.c',
+             'algo-n0.c',
+             'test-algo-n0.c'],
+            )
+
