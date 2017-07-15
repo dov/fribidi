@@ -33,4 +33,6 @@ typedef struct element_s {
 
 pairing_node_t *find_pairings(const char *text);
 
+void free_parings(pairing_node_t *pairings);
+
 #endif /* BD16 */

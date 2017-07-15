@@ -316,3 +316,33 @@ returned order: 64 65 75 73 72 71 66 62
                    isolate_level-- ;
                    valid_isolate_count--;
 #+END_EXAMPLE    
+* <2017-07-15 Sat>
+** Debugging with C11
+   - Allows using for() inline declarations and C++ comments.
+   - file:configure.ac → ~s/-ansi/-std=c11/~
+** Rebuild and testing
+   - Rebuilding problems, but the following fixes it:
+#+BEGIN_SRC sh
+\rm -f ./fribidi-vs-unicode/.libs/test-bidi-bracketing ./fribidi-vs-unicode/test-bidi-bracketing 
+make
+env LD_LIBRARY_PATH=lib/.libs ./fribidi-vs-unicode/.libs/test-bidi-bracketing 
+#+END_SRC   
+** Entering N0 support into fribidi-main
+*** So far
+    - file:fribidi-vs-unicode/bd16.py - simple BD16 implementation in python.
+    - file:fribidi-vs-unicode/algo_n0.py - simple N0 implementation in python
+    - file:fribidi-vs-unicode/bd16.c - translation of bd16 into C
+    - file:fribidi-vs-unicode/bd16-v1.c - translation of bd16 into C but with fribidi type queries. Tests the new brackets functionality.
+    - file:lib/fribidi-brackets.h, file:lib/fribidi-brackets.c -lockup of bracket properties
+    - file:gen.tab/gen-brackets-tab.c - Generator of the brackets tables
+*** Plan
+    - [X] Building a minimal test for preparation of debugging. file:fribidi-vs-unicode/test-bidi-bracketing.c
+    - [ ] Create a new struct BracketType { int id; bool is opening }
+    - [ ] Change the definition of a fribidi run so that it includes the bracket type.
+    - [ ] Change splitting so that it takes into account the bracketing property.
+    - [ ] Check that algo (except bracketing) still works.
+    - [ ] Insert N0 algo befor N1 and N2.
+    - [ ] Pack the resulting runs.
+** Work log
+   - Created example test-bidi-bracketing.c that carries out and debug prints the first N0 example from th edocumentation.
+   - Create checkpoint of current work: 

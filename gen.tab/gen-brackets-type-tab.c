@@ -9,11 +9,9 @@
  *
  * Author:
  *   Behdad Esfahbod, 2001, 2002, 2004
- *   Dov Grobgeld 2017
  *
  * Copyright (C) 2004 Sharif FarsiWeb, Inc
  * Copyright (C) 2001,2002,2004 Behdad Esfahbod
- * Copyright (C) 2017 Dov Grobgeld
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -58,8 +56,8 @@
 
 #include "packtab.h"
 
-#define appname "gen-brackets-tab"
-#define outputname "brackets.tab.i"
+#define appname "gen-brackets-type-tab"
+#define outputname "brackets-type.tab.i"
 
 static void
 die (
@@ -96,8 +94,8 @@ die4 (
   exit (1);
 }
 
-#define table_name "Brk"
-#define macro_name "FRIBIDI_GET_BRACKETS"
+#define table_name "Brt"
+#define macro_name "FRIBIDI_GET_BRACKET_TYPE"
 
 static signed int table[FRIBIDI_UNICODE_CHARS];
 static char buf[4000];
@@ -123,7 +121,7 @@ clear_tab (
 }
 
 static void
-init_tab_brackets_txt (
+init_tab_brackets_type_txt (
   void
 )
 {
@@ -131,21 +129,21 @@ init_tab_brackets_txt (
 }
 
 static void
-read_bidi_brackets_txt (
+read_bidi_brackets_type_txt (
   FILE *f
 )
 {
   unsigned long l;
 
-  init_tab_brackets_txt ();
+  init_tab_brackets_type_txt ();
 
   l = 0;
   while (fgets (buf, sizeof buf, f))
     {
       unsigned long i, j;
-      signed long dist;
       int k;
       const char *s = buf;
+      char open_close;
 
       l++;
 
@@ -155,15 +153,10 @@ read_bidi_brackets_txt (
       if (s[0] == '#' || s[0] == '\0' || s[0] == '\n')
 	continue;
 
-      k = sscanf (s, "%lx; %lx", &i, &j);
-      if (k != 2 || i >= FRIBIDI_UNICODE_CHARS || j >= FRIBIDI_UNICODE_CHARS)
+      k = sscanf (s, "%lx; %lx; %c", &i, &j, &open_close);
+      if (k != 3 || i >= FRIBIDI_UNICODE_CHARS || j >= FRIBIDI_UNICODE_CHARS)
 	die4 ("invalid pair in input at line %ld: %04lX, %04lX", l, i, j);
-      dist = ((signed long) j - (signed long) i);
-      table[i] = dist;
-      if (dist > max_dist)
-	max_dist = dist;
-      else if (-dist > max_dist)
-	max_dist = -dist;
+      table[i] = 1 + (0x2 * (open_close=='o'));
     }
 }
 
@@ -180,7 +173,7 @@ read_data (
     die2 ("error: cannot open `%s' for reading", data_file_name);
 
   if (!strcmp (data_file_type, "BidiBrackets.txt"))
-    read_bidi_brackets_txt (f);
+    read_bidi_brackets_type_txt (f);
   else
     die2 ("error: unknown data-file-type %s", data_file_type);
 
@@ -206,19 +199,17 @@ gen_brackets_tab (
 	  "#define PACKTAB_UINT16 fribidi_uint16\n"
 	  "#define PACKTAB_UINT32 fribidi_uint32\n\n");
 
-  key_bytes = max_dist <= 0x7f ? 1 : max_dist < 0x7fff ? 2 : 4;
+  key_bytes = 1;
   key_type = key_bytes == 1 ? "fribidi_int8" : key_bytes == 2 ?
     "fribidi_int16" : "fribidi_int32";
 
   if (!pack_table
       (table, FRIBIDI_UNICODE_CHARS, key_bytes, 0, max_depth, 1, NULL,
-       key_type, table_name, macro_name "_DELTA", stdout))
+       key_type, table_name, macro_name, stdout))
     die ("error: insufficient memory, decrease max_depth");
 
   printf ("#undef PACKTAB_UINT8\n"
 	  "#undef PACKTAB_UINT16\n" "#undef PACKTAB_UINT32\n\n");
-
-  printf ("#define " macro_name "(x) ((x) + " macro_name "_DELTA(x))\n\n");
 
   printf ("/* End of generated " outputname " */\n");
 }

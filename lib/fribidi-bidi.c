@@ -862,8 +862,30 @@ fribidi_get_par_embedding_levels (
      5. Compact back.
   */
 
-  DBG ("resolving neutral types");
+DBG ("resolving neutral types - N0");
+# if DEBUG
+  if UNLIKELY
+    (fribidi_debug_status ())
+    {
+      print_resolved_levels (main_run_list);
+      print_resolved_types (main_run_list);
+    }
+# endif	/* DEBUG */
+
+  DBG ("resolving neutral types - N1 + N2");
   {
+
+    /* N0. */
+
+    /* Loop over runs and separate all parens into one character runs. */
+
+    /* Find bracket pairs (per isolating level) according to BD16. This should also point to the
+       corresponding runs. */
+
+    /* Resolve all the parens according to the N0 rules */
+
+    /* Repack the parens */
+    
     /* N1. and N2.
        For each neutral, resolve it.
 

@@ -87,6 +87,7 @@ dnl ==========================================================================
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_CC_STDC
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
 AC_MSG_CHECKING([for native Win32])
@@ -122,7 +123,8 @@ AC_CHECK_SIZEOF(wchar_t)
 # Checks for compiler characteristics.
 changequote(,)dnl
 if test "x$GCC" = "xyes"; then
-  CFLAGS="$CFLAGS -Wall -ansi "
+  # ToDov: Replace c11 with -ansi when finished debugging!
+  CFLAGS="$CFLAGS -Wall -std=c11"
 fi
 changequote([,])dnl
 

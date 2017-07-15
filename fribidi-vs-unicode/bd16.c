@@ -119,3 +119,13 @@ pairing_node_t *find_pairings(const char *text)
   return pairs;
 }
 
+void free_parings(pairing_node_t *pairs)
+{
+  pairing_node_t *p = pairs;
+  while(p)
+    {
+      pairing_node_t *n = p->next;
+      free(p);
+      p = n;
+    }
+}

@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2004  Sharif FarsiWeb, Inc
  * Copyright (C) 2001, 2002, 2004  Behdad Esfahbod
- * Copyright (C) 1999, 2000  Dov Grobgeld
+ * Copyright (C) 1999, 2000, 2017  Dov Grobgeld
  *
  * This file is part of GNU FriBidi.
  * 

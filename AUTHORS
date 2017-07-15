@@ -1,18 +1,18 @@
 behdad: Behdad Esfahbod <behdad@gnu.org>
 #
-# Behdad Esfahbod is the only author that actually codes these days.  He
+# Behdad Esfahbod wrote the the majority of code in fribidi.  He
 # maintains the package too.  He has revised all of the code written by
 # others, and has written much of the code himself.  He's listed (or should
 # be listed) on every file in the package as one of the authors.  Behdad
 # designs, implements, documents, maintains, ...
 #
 
-dov-g: Dov Grobgeld <dov.grobgeld@gmail.com>
+dov: Dov Grobgeld <dov.grobgeld@gmail.com>
 #
 # Dov Grobgeld originally wrote FriBidi.  The 0.1.* releases were all done
-# by him.  After that, Dov rarely touched the code, but contributed ideas. 
-# All files that he has originally authored have him listed as an author in
-# the header of the file.
+# by him.  After that, Dov rarely touched the code until in 2016 when he
+# he started implementing the Unicode 6.3 support. All files that he has
+# touched have him listed as an author in the header of the file.
 #
 
 roozbeh: Roozbeh Pournader <roozbeh@gnu.org>

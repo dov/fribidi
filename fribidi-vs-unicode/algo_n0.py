@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import bd16
 import pandas as pd
 
@@ -18,18 +20,22 @@ def get_bidi_class(ch):
     return 'WS'
 
 def find_strong(bidi_classes, start, end):
+  '''find a strong character between start and end non-inclusive'''
+  rdir = 1
   if end < start:
-    for i in range(start,end,-1):
-      if is_strong(bidi_classes[i]):
-        return bidi_classes[i]
+    if end == -1:
+      end = None   # Req of the string range operator
+    rdir = -1
 
-  for bc in bidi_classes[start:end]:
+  for bc in bidi_classes[start:end:rdir]:
     if is_strong(bc):
       return bc
 
   return None
 
 def find_matching_strong(bidi_classes, start, end, match):
+  '''Used to find a character between start and end with the
+  bidiclass match'''
   for i in range(start,end):
     if bidi_classes[i] == match:
       return True
@@ -74,7 +80,5 @@ def test_n0(text,embedding_direction):
   
 
 test_n0(text='AB(CD[&ef]!)gh',embedding_direction='R')
-
-test_n0(text='sm (fa AR) HE',embedding_direction='R')
-  
-test_n0(text='AR bo(s)',embedding_direction='R')
+#test_n0(text='sm (fa AR) HE',embedding_direction='R')
+#test_n0(text='AR bo(s)',embedding_direction='R')
