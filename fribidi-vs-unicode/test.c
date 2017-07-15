@@ -274,7 +274,9 @@ main (int argc, char **argv)
 	    case 2: base_dir = FRIBIDI_PAR_RTL; break;
 	    }
 
-	    fribidi_get_par_embedding_levels (types, types_len,
+	    fribidi_get_par_embedding_levels (types,
+                                              NULL, /* Brackets are not used in the BidiTest.txt file */
+                                              types_len,
 					      &base_dir,
 					      levels);
 
@@ -356,7 +358,9 @@ main (int argc, char **argv)
 		    case 2: base_dir = FRIBIDI_PAR_RTL; break;
 		    }
 
-		    fribidi_get_par_embedding_levels (types, types_len,
+		    fribidi_get_par_embedding_levels (types,
+                                                      NULL, /* No bracket types */
+                                                      types_len,
 						      &base_dir,
 						      levels);
 

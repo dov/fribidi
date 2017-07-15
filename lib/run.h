@@ -55,6 +55,7 @@ struct _FriBidiRunStruct
   FriBidiCharType type;
   FriBidiLevel level;
   FriBidiLevel isolate_level;
+  FriBidiBracketType bracket_type;
 
   /* Additional links for connecting the isolate tree */
   FriBidiRun *next_isolate;  /* next node of the same isolate level.
@@ -84,6 +85,7 @@ new_run (
 #define run_list_encode_bidi_types FRIBIDI_PRIVATESPACE(run_list_encode_bidi_types)
      FriBidiRun *run_list_encode_bidi_types (
   const FriBidiCharType *bidi_types,
+  const FriBidiBracketType *bracket_types,
   const FriBidiStrIndex len
 )
      FRIBIDI_GNUC_HIDDEN FRIBIDI_GNUC_WARN_UNUSED;

@@ -1,19 +1,26 @@
-#include "fribidi-brackets.h"
+// A test program for fribidi_get_bracket()
+#include "fribidi.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char **argv)
 {
-  fribidi_uint8 type;
-  FriBidiChar ch = 0;
-  fribidi_int8 foo;
+  FriBidiCharSet utf8 = fribidi_parse_charset ("UTF-8");
+  FriBidiChar ubuf[BUFSIZ];
 
-  int ret = fribidi_get_bracket('}',
-                                // output
-                                &type,
-                                &ch);
+  const char *buf="()⌈ ⌉";
+  int len = fribidi_charset_to_unicode (utf8, buf, strlen(buf), ubuf);
 
-  printf("ret type ch = %d %d %c\n", ret, type, ch);
+  for (int i=0; i<len; i++)
+    {
+      FriBidiBracketType bracketing_type = fribidi_get_bracket(ubuf[i]);
+
+      printf("ch id is_open = U+%04x U+%04x %d\n",
+             ubuf[i],
+             bracketing_type.bracket_id,
+             bracketing_type.is_open);
+    }
   
   exit(0);
 }

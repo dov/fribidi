@@ -345,4 +345,31 @@ env LD_LIBRARY_PATH=lib/.libs ./fribidi-vs-unicode/.libs/test-bidi-bracketing
     - [ ] Pack the resulting runs.
 ** Work log
    - Created example test-bidi-bracketing.c that carries out and debug prints the first N0 example from th edocumentation.
-   - Create checkpoint of current work: 
+   - Create checkpoint of current work: commit:5cff594
+   - [X] Create structure BracketType.
+   - [X] Added the following silenting flags to configure.ac: ~-Wno-unused-result -Wno-switch -Wno-deprecated-declarations~ to silent current warnings from fribidi. Should ask Behdad if he intends to clean these.
+   - [X] Update test-bracketing.c to use the new type.
+   - [X] Add FriBidiBracketType to the FriBidiRun
+   - [X] Initialize bidi type when building the runs.
+   - [X] Split according to the bidi type.
+   - [ ] Idea, make char type a structure and incorporate the bracketing property into it? Currently need to pass both types and bracket types. Discuss with Behdad.
+   - [X] Currently ~fribidi_get_bracket()~ returns a boolean and a structure by reference. Does it make sens to have it return the structure in the return statement instead. Will do this change.
+   - [X] After N0 the run list bidi types should be reset to ~NO_BRACKET~ to allow compactification.
+   - [X] Test that the BidiTest.txt still returns 0 errors.
+   - [X] Decide about type for the BD16 pairs:
+#+BEGIN_SRC c
+#define FRIBIDI_BRACKET_PAIR_STACK_SIZE 63
+paren_pair_t *pair_stack;
+pair_stack = (element_t*)malloc (sizeof (pair_stack[0]) *
+                                 FRIBIDI_BRACKET_PAIR_STACK_SIZE);
+
+struct paren_pair_t {
+  FriBidiRun *start;
+  FriBidiRun *end;
+};
+#+END_SRC     
+    - [X] Put the allocation / deallocation code for the stack in the code.
+    - [X] Build pair stack without taking isolation into account.
+    - [X] Change name of ~bracket_pair_stack~ to ~bracket_stack~
+    - [ ] Modify to take isolation into account.
+    - [ ] Loop over the found pairs and implement the N0 algo.

@@ -129,6 +129,16 @@ typedef FRIBIDI_BOOLEAN fribidi_boolean;
 typedef FRIBIDI_UNICHAR FriBidiChar;
 typedef FRIBIDI_STR_INDEX FriBidiStrIndex;
 
+struct _FriBracketTypeStruct {
+  FriBidiChar bracket_id;
+  fribidi_boolean is_open;
+};
+
+typedef struct _FriBracketTypeStruct FriBidiBracketType;
+
+/* Use FRIBIDI_NO_BRACKET for assigning to a non-bracket */
+#define FRIBIDI_NO_BRACKET { 0, 0 }
+
 
 #ifndef FRIBIDI_MAX_STRING_LENGTH
 # define FRIBIDI_MAX_STRING_LENGTH (sizeof (FriBidiStrIndex) == 2 ?	\

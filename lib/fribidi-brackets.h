@@ -55,16 +55,25 @@
  * character is put in the output, otherwise the input character itself is
  * put.
  *
- * Returns: if the character has a brackets equivalent or not.
+ * Returns: The bracket type of the character. Use the
+ * FRIBIDI_IS_BRACKET(FriBidiBracketType) to test if it is a valid
+ * property.
  */
-FRIBIDI_ENTRY fribidi_boolean fribidi_get_bracket (
-  FriBidiChar ch,		/* input character */
-  fribidi_uint8 *bracket_type,  /* output bracket type. */
-  FriBidiChar   *bracketed_ch   /* output bracket character. Only valid
-				   if bracket_type != 0 */
+FRIBIDI_ENTRY FriBidiBracketType fribidi_get_bracket (
+  FriBidiChar ch		    /* input character */
 );
 
-#define FRIBIDI_TYPE_BRACKET_OPEN 2
+FRIBIDI_ENTRY void
+fribidi_get_bracket_types (
+  /* input */
+  const FriBidiChar *str,
+  const FriBidiStrIndex len,
+  /* output */
+  FriBidiBracketType *btypes
+);
+
+#define FRIBIDI_IS_BRACKET(bt) ((bt)->bracket_id>0)
+#define FRIBIDI_IS_BRACKET_OPEN(bt) ((bt)->is_open>0)
 
 #include "fribidi-enddecls.h"
 

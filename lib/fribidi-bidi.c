@@ -56,7 +56,13 @@
 #define RL_LEN(list) ((list)->len)
 #define RL_POS(list) ((list)->pos)
 #define RL_LEVEL(list) ((list)->level)
+#define RL_BRACKET_TYPE(list) ((list)->bracket_type)
 #define RL_ISOLATE_LEVEL(list) ((list)->isolate_level)
+
+/* Compare for equality */
+#define RL_BRACKET_TYPE_EQUAL(list1,list2) ( \
+   (list1)->bracket_type.bracket_id == (list2)->bracket_type.bracket_id \
+   && (list1)->bracket_type.is_open == (list2)->bracket_type.is_open)
 
 static FriBidiRun *
 merge_with_prev (
@@ -87,7 +93,8 @@ compact_list (
   if (list->next)
     for_run_list (list, list)
       if (RL_TYPE (list->prev) == RL_TYPE (list)
-	  && RL_LEVEL (list->prev) == RL_LEVEL (list))
+	  && RL_LEVEL (list->prev) == RL_LEVEL (list)
+          && RL_BRACKET_TYPE_EQUAL (list->prev, list) )
       list = merge_with_prev (list);
 }
 
@@ -106,7 +113,9 @@ compact_neutrals (
 	    &&
 	    ((RL_TYPE (list->prev) == RL_TYPE (list)
 	      || (FRIBIDI_IS_NEUTRAL (RL_TYPE (list->prev))
-		  && FRIBIDI_IS_NEUTRAL (RL_TYPE (list))))))
+		  && FRIBIDI_IS_NEUTRAL (RL_TYPE (list)))))
+            && RL_BRACKET_TYPE_EQUAL (list->prev, list) 
+            )
 	  list = merge_with_prev (list);
       }
     }
@@ -363,10 +372,52 @@ fribidi_get_par_direction (
   return FRIBIDI_PAR_ON;
 }
 
+struct _FriBidiPairingNodeStruct {
+  FriBidiRun *open;
+  FriBidiRun *close;
+  struct _FriBidiPairingNodeStruct *next;
+};
+typedef struct _FriBidiPairingNodeStruct FriBidiPairingNode;
+
+// Push a new entry to the pairing linked list
+static FriBidiPairingNode * pairing_nodes_push(FriBidiPairingNode *nodes,
+                                               FriBidiRun *open,
+                                               FriBidiRun *close)
+{
+  FriBidiPairingNode *node = fribidi_malloc(sizeof(FriBidiPairingNode));
+  node->open = open;
+  node->close = close;
+  node->next = nodes;
+  nodes = node;
+  return nodes;
+}
+
+void print_pairing_nodes(FriBidiPairingNode *nodes)
+{
+  printf("Pairs: ");
+  while(nodes)
+    {
+      printf("(%d, %d) ", nodes->open->pos, nodes->close->pos);
+      nodes = nodes->next;
+    }
+  printf("\n");
+}
+
+void free_pairing_nodes(FriBidiPairingNode *nodes)
+{
+  while(nodes)
+    {
+      FriBidiPairingNode *p = nodes;
+      nodes = nodes->next;
+      fribidi_free(p);
+    }
+}
+
 FRIBIDI_ENTRY FriBidiLevel
 fribidi_get_par_embedding_levels (
   /* input */
   const FriBidiCharType *bidi_types,
+  const FriBidiBracketType *bracket_types,
   const FriBidiStrIndex len,
   /* input and output */
   FriBidiParType *pbase_dir,
@@ -395,7 +446,7 @@ fribidi_get_par_embedding_levels (
   /* Determinate character types */
   {
     /* Get run-length encoded character types */
-    main_run_list = run_list_encode_bidi_types (bidi_types, len);
+    main_run_list = run_list_encode_bidi_types (bidi_types, bracket_types, len);
     if UNLIKELY
       (!main_run_list) goto out;
   }
@@ -862,7 +913,70 @@ fribidi_get_par_embedding_levels (
      5. Compact back.
   */
 
-DBG ("resolving neutral types - N0");
+  DBG ("resolving neutral types - N0");
+  printf("Before N0\n");
+  print_types_re (main_run_list);
+
+  {
+    FriBidiRun **bracket_stack;
+    FriBidiPairingNode *pairing_nodes = NULL;
+
+    bracket_stack = fribidi_malloc (sizeof (bracket_stack[0])
+                                    * FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS);
+
+    int bracket_stack_size = 0;
+
+    /* Build the bd16 pair stack. TBD - Do one isolation layer at atime */
+    for_run_list (pp, main_run_list)
+      {
+        FriBidiBracketType brack_prop = RL_BRACKET_TYPE(pp);
+        if (FRIBIDI_IS_BRACKET(&brack_prop))
+          {
+            if (brack_prop.is_open)
+              {
+                if (bracket_stack_size==FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS)
+                  break;
+    
+                // push onto the pair stack
+                bracket_stack[bracket_stack_size++] = pp;
+              }
+            else
+              {
+                int stack_idx = bracket_stack_size - 1;
+                while(stack_idx >= 0)
+                  {
+                    FriBidiBracketType se_brack_prop = RL_BRACKET_TYPE(bracket_stack[stack_idx]);
+                    if (se_brack_prop.bracket_id == brack_prop.bracket_id)
+                      {
+                        bracket_stack_size = stack_idx;
+    
+                        pairing_nodes = pairing_nodes_push(pairing_nodes,
+                                                           bracket_stack[stack_idx],
+                                                           pp);
+                        break;
+                    }
+                  }
+              }
+          }
+      }
+        
+    print_pairing_nodes(pairing_nodes);
+
+    FriBidiPairingNode *ppairs = pairing_nodes;
+    while(ppairs)
+      {
+        // Do N0b, N0c, and N0d
+        ppairs = ppairs->next;
+      }
+    free_pairing_nodes(pairing_nodes);
+    fribidi_free(bracket_stack);
+
+    /* Remove the bracket property and re-compact */
+    const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
+    for_run_list (pp, main_run_list)
+      pp->bracket_type = NoBracket;
+    compact_list (main_run_list);
+  }
 # if DEBUG
   if UNLIKELY
     (fribidi_debug_status ())
@@ -871,6 +985,7 @@ DBG ("resolving neutral types - N0");
       print_resolved_types (main_run_list);
     }
 # endif	/* DEBUG */
+
 
   DBG ("resolving neutral types - N1 + N2");
   {

@@ -114,6 +114,8 @@ FRIBIDI_ENTRY FriBidiLevel
 fribidi_log2vis_get_embedding_levels (
   const FriBidiCharType *bidi_types,	/* input list of bidi types as returned by
 					   fribidi_get_bidi_types() */
+  const FriBidiBracketType *bracket_types,	/* input list of bidi types as returned by
+					   fribidi_get_bracket_types() */
   const FriBidiStrIndex len,	/* input string length of the paragraph */
   FriBidiParType *pbase_dir,	/* requested and resolved paragraph
 				 * base direction */

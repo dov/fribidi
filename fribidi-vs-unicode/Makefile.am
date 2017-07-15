@@ -1,8 +1,9 @@
-noinst_PROGRAMS = test-bidi-bracketing test-character test
+noinst_PROGRAMS = test-bidi-bracketing test-character test test-bracketing
 
 test_bidi_bracketing_SOURCES = test-bidi-bracketing.c
 test_character_SOURCES = test-character.c
 test_SOURCES = test.c
+test_bracketing_SOURCES = test-bracketing.c
 
 AM_CPPFLAGS = \
 		-I$(top_builddir)/lib \

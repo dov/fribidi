@@ -37,23 +37,58 @@
 #include "brackets-type.tab.i"
 #include <stdio.h>
 
-FRIBIDI_ENTRY fribidi_boolean
+#define FRIBIDI_TYPE_BRACKET_OPEN 2
+
+FRIBIDI_ENTRY FriBidiBracketType
 fribidi_get_bracket (
   /* input */
-  FriBidiChar ch,
-  /* output */
-  fribidi_uint8 *bracketed_type,
-  FriBidiChar *bracketed_ch
+  FriBidiChar ch
 )
 {
+  FriBidiBracketType bracket_type;
   register fribidi_uint8 char_type;
-  char_type = FRIBIDI_GET_BRACKET_TYPE (ch);
-  if (char_type && bracketed_ch)
-      *bracketed_ch = FRIBIDI_GET_BRACKETS (ch);
 
-  if (bracketed_type)
-    *bracketed_type = char_type;
-  return char_type != 0;
+  /* The bracket type from the table may be:
+        0 - Not a bracket
+	1 - a bracket
+	2 - closing.
+
+     This will be recodeded into the FriBidiBracketType as having a
+     bracket_id = 0 if the character is not a bracket.
+   */
+  char_type = FRIBIDI_GET_BRACKET_TYPE (ch);
+  fribidi_boolean is_open = 0;
+
+  if (char_type == 0) 
+    bracket_type.bracket_id = 0;
+  else
+  {
+    is_open = (char_type & FRIBIDI_TYPE_BRACKET_OPEN) != 0;
+    if (is_open)
+      bracket_type.bracket_id = ch;
+    else
+      bracket_type.bracket_id = FRIBIDI_GET_BRACKETS (ch);
+  }
+  bracket_type.is_open = is_open;
+
+  return bracket_type;
+}
+
+FRIBIDI_ENTRY void
+fribidi_get_bracket_types (
+  /* input */
+  const FriBidiChar *str,
+  const FriBidiStrIndex len,
+  /* output */
+  FriBidiBracketType *btypes
+)
+{
+  register FriBidiStrIndex i = len;
+  for (; i; i--)
+    {
+      *btypes++ = fribidi_get_bracket (*str);
+      str++;
+    }
 }
 
 /* Editor directions:

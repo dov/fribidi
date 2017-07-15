@@ -15,22 +15,19 @@ bool_t get_brack_prop(char c,
                       // output
                       brack_prop_t *prop)
 {
-  fribidi_uint8 type;
-  FriBidiChar ch = 0;
+  FriBidiBracketType bracket_type = fribidi_get_bracket(c);
 
-  int ret = fribidi_get_bracket(c,
-                                // output
-                                &type,
-                                &ch);
-
-  if (!ret)
+  if (bracket_type.bracket_id == 0)
     return 0;
 
-  prop->opening = (type & FRIBIDI_TYPE_BRACKET_OPEN)>0;
+  prop->opening = bracket_type.is_open;
   if (prop->opening)
-    prop->type = c;
+      prop->type = c;
   else
-    prop->type = ch;
+      prop->type = bracket_type.bracket_id;
+
+  printf("c opening type = %c %d %d\n",
+         c, prop->opening, prop->type);
 
   return 1;
 }
@@ -93,6 +90,7 @@ pairing_node_t *find_pairings(const char *text)
 
                       break;
                     }
+                  stack_idx--;
                 }
             }
         }

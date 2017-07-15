@@ -42,12 +42,14 @@ def find_matching_strong(bidi_classes, start, end, match):
 
   return False
 
-def test_n0(text,embedding_direction):
+def test_n0(text,embedding_direction, print_pairings=False):
   Table = [list(text) + ['']]
   bc = [get_bidi_class(ch) for ch in text]
   Table += [bc[:] + ['']]
   
   pairings = bd16.find_pairings(text)
+  if print_pairings:
+    print pairings
   for pr in pairings:
     rule = ''
     has_strong = find_matching_strong(bc, pr[0], pr[1], embedding_direction)
@@ -79,6 +81,6 @@ def test_n0(text,embedding_direction):
   print ''
   
 
-test_n0(text='AB(CD[&ef]!)gh',embedding_direction='R')
+test_n0(text='AB(CD[&ef]!)gh',embedding_direction='R', print_pairings=True)
 #test_n0(text='sm (fa AR) HE',embedding_direction='R')
 #test_n0(text='AR bo(s)',embedding_direction='R')

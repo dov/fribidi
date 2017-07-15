@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Dov Grobgeld
+ * Copyright (C) 2015, 2017 Dov Grobgeld
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -174,12 +174,13 @@ main (int argc, char **argv)
   FriBidiChar *code_points = NULL;
   int code_points_len = 0;
   int expected_ltor_len = 0;
-  int base_dir_mode, paragraph_dir;
+  int base_dir_mode = 0, paragraph_dir;
   FriBidiLevel *expected_levels = NULL;
   int *expected_ltor = NULL;
   int resolved_paragraph_embedding_level;
   FriBidiLevel *levels = NULL;
   FriBidiCharType *types = NULL;
+  FriBidiBracketType *bracket_types = NULL;
   FriBidiStrIndex *ltor = NULL;
   int ltor_len;
   gboolean debug = FALSE;
@@ -240,6 +241,9 @@ main (int argc, char **argv)
                        );
 
       /* Test it */
+      g_free(bracket_types);
+      bracket_types = g_malloc ( sizeof(FriBidiBracketType) * code_points_len);
+
       g_free(types);
       types = g_malloc ( sizeof(FriBidiCharType) * code_points_len);
 
@@ -258,7 +262,10 @@ main (int argc, char **argv)
         int levels_len = types_len;
 
         for (i=0; i<code_points_len; i++)
-          types[i] = fribidi_get_bidi_type(code_points[i]); 
+          {
+            types[i] = fribidi_get_bidi_type(code_points[i]); 
+            bracket_types[i] = fribidi_get_bracket(code_points[i]);
+          }
 
         if ((paragraph_dir & (1<<base_dir_mode)) == 0)
           continue;
@@ -270,7 +277,9 @@ main (int argc, char **argv)
           case 2: base_dir = FRIBIDI_PAR_ON;  break;
           }
 
-        fribidi_get_par_embedding_levels (types, types_len,
+        fribidi_get_par_embedding_levels (types,
+                                          bracket_types,
+                                          types_len,
                                           &base_dir,
                                           levels);
 
@@ -352,7 +361,9 @@ main (int argc, char **argv)
                   case 2: base_dir = FRIBIDI_PAR_RTL; break;
                   }
 
-                fribidi_get_par_embedding_levels (types, types_len,
+                fribidi_get_par_embedding_levels (types,
+                                                  bracket_types,
+                                                  types_len,
                                                   &base_dir,
                                                   levels);
 

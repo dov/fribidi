@@ -66,6 +66,9 @@ extern const char *fribidi_unicode_version;
 /* The maximum *number* of different resolved embedding levels: 0-126 */
 #define FRIBIDI_BIDI_MAX_RESOLVED_LEVELS	127
 
+/* The maximum *number* of nested brackets: 0-63 */
+#define FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS   63
+
 /* A few Unicode characters: */
 
 /* Bidirectional marks */

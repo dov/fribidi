@@ -5,8 +5,9 @@
 
 int main(int argc, char **argv)
 {
-  pairing_node_t *pairs = find_pairings("a(b{c}d)");
-
+  const char *text = "a(b{c}d)";
+  printf("Testing: %s\n", text);
+  pairing_node_t *pairs = find_pairings(text);
   while(pairs)
     {
       pairing_node_t *p = pairs;
