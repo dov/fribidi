@@ -373,3 +373,43 @@ struct paren_pair_t {
     - [X] Change name of ~bracket_pair_stack~ to ~bracket_stack~
     - [ ] Modify to take isolation into account.
     - [ ] Loop over the found pairs and implement the N0 algo.
+    - Testing a single instance string. (This is yields wrong result in iteration 1 below)
+#+BEGIN_SRC sh
+env LD_LIBRARY_PATH=lib/.libs ./fribidi-vs-unicode/.libs/test-bidi-bracketing 'a(C)'
+#+END_SRC    
+    - Found error in comparison of embedding dir! After fix 522 errors.
+    - Got error in line 2074 on '(a)(b)c' with RTL embedding. Two errors were found that caused this:
+    1. There was a logical error in the implementation N2c
+    2. The bracket list was not sorted!
+    - Iteration 3: 
+   - Got error on line 50292 and also on 'a(b)).A'. Found the error that the run length joined the two ')' characters! But this is wrong! They can't be treated as a unit.
+   - [ ] Make brackets always occupy one character runs! (It is probably possible to do something clever with longer runs and smarter logics for spliting, etc. But it is probably not worth the trouble.)
+** test-character error progress
+   | Iteration | #Errors | Comment                                         |
+   |-----------+---------+-------------------------------------------------|
+   |         0 |    7537 | Before n0                                       |
+   |         1 |    6050 | First trial                                     |
+   |         2 |     522 | Fixed embedding dir err                         |
+   |         3 |     280 | Forced bracket runs to be of size 1             |
+   |         4 |      10 | See below                                       |
+   |         5 |    3454 | After rewrite of using levels instead of R or L |
+   |           |         | (I should commit more often!)                   |
+
+** Mapping of remaining errors
+   |     | Error (line) | Problem               |
+   |-----+--------------+-----------------------|
+   | #1  |          205 | LRI                   |
+   | #2  |          211 | FSI                   |
+   | #3  |          218 | RLE/PDF               |
+   | #4  |          219 | RLE/PDF               |
+   | #5  |          220 | RLE/PDF               |
+   | #6  |          226 | RLI/LRI/RLE/PDF       |
+   | #7  |          235 | LRI/RLI               |
+   | #8  |          237 | LRI                   |
+   | #9  |          242 | Canonical equivalence |
+   | #10 |          243 | Canonical equivalence |
+   - [ ] To solve the canonical equivalence gen-brackets-tab.c should be changed to encode the canonical equivalent character as the bracket id instead of the current value. Alternatively lookup the canonical equivalence in ~fribidi_get_bracket_type()~. Less memory to encode the canonical equivalent directly.
+** Other
+   - [ ] Figure out the RLE/PDF error on line #219. Ok, the reason is that the embedding level is 1, but the level of the RLE'd contents is 3, therefore there is no match and the embedded RTL should not be used to apply N0c.
+  - Tried using levels instead of RTL dir. Failed. Got 3544 errors. Failed attempt saved in fribidi-bidi-level.c
+  - [ ] Create checkpoint of current 10 errors. Commit: 

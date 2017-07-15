@@ -9,6 +9,11 @@ int main(int argc, char **argv)
   FriBidiCharType *types = NULL;
   FriBidiBracketType *bracket_types = NULL;
   const char * text="AB(CD[&ef]!)gh";  // The first N0 example from UAX#9
+
+  int argp=1;
+  if (argc > argp)
+    text = argv[argp++];
+
   FriBidiParType base_dir= FRIBIDI_PAR_RTL;
   FriBidiCharSet caprtl = fribidi_parse_charset ("CapRTL");
 

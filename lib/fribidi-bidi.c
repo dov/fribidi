@@ -94,7 +94,9 @@ compact_list (
     for_run_list (list, list)
       if (RL_TYPE (list->prev) == RL_TYPE (list)
 	  && RL_LEVEL (list->prev) == RL_LEVEL (list)
-          && RL_BRACKET_TYPE_EQUAL (list->prev, list) )
+          && RL_BRACKET_TYPE(list).bracket_id == 0 /* Don't join brackets! */
+          && RL_BRACKET_TYPE(list->prev).bracket_id == 0
+          )
       list = merge_with_prev (list);
 }
 
@@ -114,7 +116,8 @@ compact_neutrals (
 	    ((RL_TYPE (list->prev) == RL_TYPE (list)
 	      || (FRIBIDI_IS_NEUTRAL (RL_TYPE (list->prev))
 		  && FRIBIDI_IS_NEUTRAL (RL_TYPE (list)))))
-            && RL_BRACKET_TYPE_EQUAL (list->prev, list) 
+            && RL_BRACKET_TYPE(list).bracket_id == 0 /* Don't join brackets! */
+            && RL_BRACKET_TYPE(list->prev).bracket_id == 0
             )
 	  list = merge_with_prev (list);
       }
@@ -392,7 +395,7 @@ static FriBidiPairingNode * pairing_nodes_push(FriBidiPairingNode *nodes,
   return nodes;
 }
 
-void print_pairing_nodes(FriBidiPairingNode *nodes)
+static void print_pairing_nodes(FriBidiPairingNode *nodes)
 {
   printf("Pairs: ");
   while(nodes)
@@ -401,6 +404,74 @@ void print_pairing_nodes(FriBidiPairingNode *nodes)
       nodes = nodes->next;
     }
   printf("\n");
+}
+
+/* Sort by merge sort */
+static void pairing_nodes_front_back_split(FriBidiPairingNode *source,
+                                           /* output */
+                                           FriBidiPairingNode **front,
+                                           FriBidiPairingNode **back)
+{
+  FriBidiPairingNode *pfast, *pslow;
+  if (source==NULL || source->next==NULL)
+    {
+      *front = source;
+      *back = NULL;
+    }
+  else
+    {
+      pslow = source;
+      pfast = source->next;
+      while (pfast != NULL)
+        {
+          pfast= pfast->next;
+          if (pfast!=NULL)
+            {
+              pfast = pfast->next;
+              pslow = pslow->next;
+            }
+        }
+      *front = source;
+      *back = pslow->next;
+      pslow->next = NULL;
+    }
+}
+
+static FriBidiPairingNode *
+pairing_nodes_sorted_merge(FriBidiPairingNode *nodes1,
+                           FriBidiPairingNode *nodes2)
+{
+  FriBidiPairingNode *res = NULL;
+  if (nodes1 == NULL)
+    return nodes2;
+  if (nodes2 == NULL)
+    return nodes1;
+
+  if (nodes1->open->pos < nodes2->open->pos)
+    {
+      res = nodes1;
+      res->next = pairing_nodes_sorted_merge(nodes1->next, nodes2);
+    }
+  else
+    {
+      res = nodes2;
+      res->next = pairing_nodes_sorted_merge(nodes1, nodes2->next);
+    }
+  return res;
+}
+
+static void sort_pairing_nodes(FriBidiPairingNode **nodes)
+{
+  /* 0 or 1 node case */
+  if (*nodes==NULL || (*nodes)->next==NULL)
+    return;
+
+  FriBidiPairingNode *front, *back;
+  pairing_nodes_front_back_split(*nodes,
+                                 &front,&back);
+  sort_pairing_nodes(&front);
+  sort_pairing_nodes(&back);
+  *nodes = pairing_nodes_sorted_merge(front,back);
 }
 
 void free_pairing_nodes(FriBidiPairingNode *nodes)
@@ -914,10 +985,16 @@ fribidi_get_par_embedding_levels (
   */
 
   DBG ("resolving neutral types - N0");
-  printf("Before N0\n");
-  print_types_re (main_run_list);
+# if DEBUG
+  if UNLIKELY
+    (fribidi_debug_status ())
+    {
+      print_types_re (main_run_list);
+    }
+# endif	/* DEBUG */
 
-  {
+  DBG ("Before N0\n");
+  if (1) {
     FriBidiRun **bracket_stack;
     FriBidiPairingNode *pairing_nodes = NULL;
 
@@ -955,17 +1032,99 @@ fribidi_get_par_embedding_levels (
                                                            pp);
                         break;
                     }
+                    stack_idx--;
                   }
               }
           }
       }
-        
-    print_pairing_nodes(pairing_nodes);
 
+    /* The list must now be sorted for the next algo to work! */
+# if DEBUG
+  if UNLIKELY
+    (fribidi_debug_status ())
+    {
+      printf("before sort: ");
+      print_pairing_nodes(pairing_nodes);
+    }
+# endif	/* DEBUG */
+
+    sort_pairing_nodes(&pairing_nodes);
+
+# if DEBUG
+  if UNLIKELY
+    (fribidi_debug_status ())
+    {
+      printf("after sort: ");
+      print_pairing_nodes(pairing_nodes);
+    }
+# endif	/* DEBUG */
+
+  /* Start the N0 */
+  {
     FriBidiPairingNode *ppairs = pairing_nodes;
     while(ppairs)
       {
-        // Do N0b, N0c, and N0d
+        // TBD: How is the embedding direction chosen?
+        int embedding_dir = base_dir==FRIBIDI_PAR_RTL; /* This is not necessarily true for
+                                                          isolate. Update this! */
+        
+        // Find matching strong.
+        fribidi_boolean found = false;
+        FriBidiRun *ppn;
+        for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)
+          {
+            FriBidiCharType this_type = RL_TYPE(ppn);
+            int this_dir = (this_type == FRIBIDI_TYPE_RTL
+                            || this_type == FRIBIDI_TYPE_AL
+                            || this_type == FRIBIDI_TYPE_EN
+                            || this_type == FRIBIDI_TYPE_AN
+                            );
+            /* N0b */
+            if (FRIBIDI_IS_STRONG (this_type) && this_dir == embedding_dir)
+              {
+                RL_TYPE(ppairs->open) = RL_TYPE(ppairs->close) = this_dir ? FRIBIDI_TYPE_RTL : FRIBIDI_TYPE_LTR;
+                found = true;
+                break;
+              }
+          }
+        
+        /* N0c */
+        /* Search for any strong type within the bracket pair */
+        if (!found)
+          {
+            /* Search for a preceding strong */
+            int prec_strong_dir = embedding_dir;
+            for (ppn = ppairs->open->prev; ppn->type != FRIBIDI_TYPE_SENTINEL; ppn=ppn->prev)
+              {
+                FriBidiCharType this_type = RL_TYPE(ppn);
+                if (FRIBIDI_IS_STRONG (this_type))
+                  {
+                    prec_strong_dir = (this_type == FRIBIDI_TYPE_RTL
+                                       || this_type == FRIBIDI_TYPE_AL
+                                       || this_type == FRIBIDI_TYPE_EN
+                                       || this_type == FRIBIDI_TYPE_AN
+                                       );
+                    break;
+                  }
+              }
+            
+
+            for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)
+              {
+                FriBidiCharType this_type = RL_TYPE(ppn);
+                if (FRIBIDI_IS_STRONG (this_type))
+                  {
+                    /* By constraint this is opposite the embedding direction,
+                       since we did not match the N0b rule. We must now
+                       compare with the preceding strong to establish whether
+                       to apply N0c1 (opposite) or N0c2 embedding */
+                    RL_TYPE(ppairs->open) = RL_TYPE(ppairs->close) = prec_strong_dir ? FRIBIDI_TYPE_RTL : FRIBIDI_TYPE_LTR;
+                    found = true;
+                    break;
+                  }
+              }
+          }
+        
         ppairs = ppairs->next;
       }
     free_pairing_nodes(pairing_nodes);
@@ -985,7 +1144,7 @@ fribidi_get_par_embedding_levels (
       print_resolved_types (main_run_list);
     }
 # endif	/* DEBUG */
-
+  }
 
   DBG ("resolving neutral types - N1 + N2");
   {
