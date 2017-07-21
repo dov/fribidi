@@ -53,9 +53,12 @@ class ResView(gtk.DrawingArea):
       unichr(0x202a) : 'LRE',
       unichr(0x202b) : 'RLE',
       unichr(0x202c) : 'PDF',
+      unichr(0x202d) : 'LRO',
+      unichr(0x202e) : 'RLO',
       unichr(0x2066) : 'LRI',
       unichr(0x2067) : 'RLI',
       unichr(0x2068) : 'FSI',
+      unichr(0x2069) : 'PDI',
     }
     visual = {' ':u'⎵'}
 

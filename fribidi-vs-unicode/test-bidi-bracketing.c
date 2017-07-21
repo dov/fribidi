@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   fribidi_set_debug(255);
   int code_points_len = strlen(text);
   FriBidiChar * code_points = g_malloc(sizeof(FriBidiChar) * code_points_len);
-  fribidi_charset_to_unicode (caprtl, text, code_points_len, code_points);
+  code_points_len = fribidi_charset_to_unicode (caprtl, text, code_points_len, code_points);
 
   bracket_types = g_malloc(sizeof(FriBidiBracketType) * code_points_len);
   types = g_malloc ( sizeof(FriBidiCharType) * code_points_len);
@@ -37,8 +37,13 @@ int main(int argc, char **argv)
                                     &base_dir,
                                     levels);
   
-  for (int i=0; i<types_len; i++)
-    printf("%c   ", text[i]);
+  for (int i=0; i<code_points_len; i++)
+    {
+      char buf[BUFSIZ];
+
+      fribidi_unicode_to_charset (caprtl, &code_points[i], 1, buf);
+      printf("%-3s ", buf);
+    }
   printf("\n");
 
   for (int i=0; i<types_len; i++)

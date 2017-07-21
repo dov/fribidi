@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <glib.h>
 #include <ctype.h>
 #include <errno.h>
@@ -192,6 +193,17 @@ main (int argc, char **argv)
     }
 
   next_arg = 1;
+  while(next_arg < argc && argv[next_arg][0]=='-')
+    {
+      const char *arg = argv[next_arg++];
+      if (strcmp(arg, "--debug")==0)
+        {
+          debug=TRUE;
+          continue;
+        }
+      die("Unknown option %s!\n", arg);
+    }
+  
   filename = argv[next_arg++];
 
   error = NULL;
@@ -201,6 +213,8 @@ main (int argc, char **argv)
       g_printerr ("%s\n", error->message);
       exit (1);
     }
+
+  fribidi_set_debug(debug);
 
   while (TRUE)
     {

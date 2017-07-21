@@ -385,15 +385,17 @@ env LD_LIBRARY_PATH=lib/.libs ./fribidi-vs-unicode/.libs/test-bidi-bracketing 'a
    - Got error on line 50292 and also on 'a(b)).A'. Found the error that the run length joined the two ')' characters! But this is wrong! They can't be treated as a unit.
    - [ ] Make brackets always occupy one character runs! (It is probably possible to do something clever with longer runs and smarter logics for spliting, etc. But it is probably not worth the trouble.)
 ** test-character error progress
-   | Iteration | #Errors | Comment                                         |
-   |-----------+---------+-------------------------------------------------|
-   |         0 |    7537 | Before n0                                       |
-   |         1 |    6050 | First trial                                     |
-   |         2 |     522 | Fixed embedding dir err                         |
-   |         3 |     280 | Forced bracket runs to be of size 1             |
-   |         4 |      10 | See below                                       |
-   |         5 |    3454 | After rewrite of using levels instead of R or L |
-   |           |         | (I should commit more often!)                   |
+   | Iteration | #Errors | Comment                                                 |
+   |-----------+---------+---------------------------------------------------------|
+   |         0 |    7537 | Before n0                                               |
+   |         1 |    6050 | First trial                                             |
+   |         2 |     522 | Fixed embedding dir err                                 |
+   |         3 |     280 | Forced bracket runs to be of size 1                     |
+   |         4 |      10 | See below                                               |
+   |         5 |    3454 | After rewrite of using levels instead of R or L         |
+   |           |         | (I should commit more often!)                           |
+   |         6 |       8 | "Fake improvement". Still have RLE problems...          |
+   |         7 |      11 | Updated the BidiCharacterTest.txt to the latest version |
 
 ** Mapping of remaining errors
    |     | Error (line) | Problem               |
@@ -413,3 +415,83 @@ env LD_LIBRARY_PATH=lib/.libs ./fribidi-vs-unicode/.libs/test-bidi-bracketing 'a
    - [ ] Figure out the RLE/PDF error on line #219. Ok, the reason is that the embedding level is 1, but the level of the RLE'd contents is 3, therefore there is no match and the embedded RTL should not be used to apply N0c.
   - Tried using levels instead of RTL dir. Failed. Got 3544 errors. Failed attempt saved in fribidi-bidi-level.c
   - [ ] Create checkpoint of current 10 errors. Commit: 
+  - [ ] When overriding the no bracket, can do it faster through the pair list!
+** Bug report to unicode concortium:
+   - Reporting page: http://www.unicode.org/reporting.html
+   - Contents of report:
+#+BEGIN_QUOTE
+Hello,
+
+I'm trying to pass all the tests in BidiCharacterTest.txt , and I'm having problem understanding a few of the tests that to me appear to contradict the spefication. The problematic lines in BidiCharacterTest-10.0.0.txt are the tests on lines 262, 263, and 264.
+
+Let's consider test from line 262:
+
+Dir: RTL
+Input:   a ( b <RLE> c <pdf> ) _ 1
+Level:   2 2 2 x 4 x 1 1 2
+
+The problem I'm having is that the first opening bracket is assigned level 2 and the closing bracket level 1.
+
+This seems to contradict the three rules N0.b, N0.c.1, and N0.c.2 in the specification that all describe overriding the type of both brackets with either the matching or the opposite direction. The only case we can possibly get different levels (correct me if I'm wrong!) is if rule N0.d is applied and the brackets retain their neutral status until it is resolved in subsequent rules.
+
+I would very much appreciate if you would either acknowledge a bug or correct a misunderstanding on my part.
+
+Thank you in advance!
+Dov
+#+END_QUOTE   
+* <2017-07-21 Fri>
+** Done/Todo
+   - [X] Make one paren list bd16 per bidi level.
+   - Tested with the simpl character test from above:
+#+BEGIN_SRC sh
+env LD_LIBRARY_PATH=lib/.libs ./fribidi-vs-unicode/.libs/test-bidi-bracketing 'a(C)'
+#+END_SRC    
+   - Note: should always test with valgrind as well.
+   - [X] Testing the failure rate. Got 11 errors.
+#+BEGIN_SRC sh
+env LD_LIBRARY_PATH=lib/.libs  ./fribidi-vs-unicode/.libs/test-character ./fribidi-vs-unicode/BidiCharacterTest.txt 
+#+END_SRC   
+   - First test that fails is not bracket related. Line=60.
+| Input:           | <RLO> | a | <LRE> | b | <PDF> | <LRI> | c | <PDI> | <LRE> | d | <PDF> | e | <PDF> |
+| Expected levels: | x     | 3 | x     | 4 | x     |     3 | 4 |     3 | x     | 4 | x     | 3 | x     |
+| Returned levels: | 1     | 3 | 3     | 4 | 4     |     4 | 4 |     4 | 4     | 4 | 4     | 3 | 1     |
+  - The LRI shouldn't have a raised level.
+  - Save in line60.txt
+  - Don't understand the test 60:
+    - The problem is regarding 3.3.6 I1 and I2 "Resolving Implicit Levels":
+      - Before I1 and I2 LRI has level 3
+      - But since the embedding level is odd and we have an L Type, it's EL should be changed to EL+1.
+      - If I ignore increasing the EL by the following patch below, then Line 60 passes. But I get 71 failures in BidiTest.txt .
+#+BEGIN_SRC patch
+diff --git a/tmp/2.c b/tmp/1.c
+index 4401697..4dd98af 100644
+--- a/tmp/2.c
++++ b/tmp/1.c
+@@ -1208,7 +1208,7 @@ fribidi_get_par_embedding_levels (
+       else
+         next_type = FRIBIDI_LEVEL_TO_DIR(MAX(RL_LEVEL(ppp_next), RL_LEVEL(pp)));
+ 
+-      if (FRIBIDI_IS_NEUTRAL (this_type))
++      if (FRIBIDI_IS_NEUTRAL (this_type) && !FRIBIDI_IS_ISOLATE(this_type))
+ 	RL_TYPE (pp) = (prev_type == next_type) ?
+ 	  /* N1. */ prev_type :
+ 	  /* N2. */ FRIBIDI_EMBEDDING_DIRECTION (pp);
+#+END_SRC      
+   - Example of a failure in BidiTest.txt, on line 496064
+     - base dir: RTL
+| input is:        | L | FSI | PDI | EN |
+| expected levels: | 2 |   2 |   2 |  2 |
+| returned levels: | 2 |   1 |   1 |  2 |
+
+#+BEGIN_EXAMPLE
+failure on line 496064
+input is: L FSI PDI EN; 4
+base dir: RTL
+expected levels: 2 2 2 2
+returned levels: 2 1 1 2
+expected order: 0 1 2 3
+returned order: 3 2 1 0
+#+END_EXAMPLE   
+   - From UAX#9: "directional isolates have the effect of a neutral. E.g. they don't affect the surrounding". And since neutrals are raised in I1,I2 the isolates should be raised as well.
+   - Found the reason for the Line 60 error! I was not taking the override flag into account when encountiring an isolate character. 
+   - Down to 10 errors.
