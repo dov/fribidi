@@ -495,3 +495,5 @@ returned order: 3 2 1 0
    - From UAX#9: "directional isolates have the effect of a neutral. E.g. they don't affect the surrounding". And since neutrals are raised in I1,I2 the isolates should be raised as well.
    - Found the reason for the Line 60 error! I was not taking the override flag into account when encountiring an isolate character. 
    - Down to 10 errors.
+   - Implemented the rule "Within this scope, bidirectional types EN and AN are treated as R" of N0. Down to 8 errors.
+   

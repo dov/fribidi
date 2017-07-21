@@ -58,6 +58,10 @@
 #define RL_LEN(list) ((list)->len)
 #define RL_POS(list) ((list)->pos)
 #define RL_LEVEL(list) ((list)->level)
+
+/* "Within this scope, bidirectional types EN and AN are treated as R" */
+#define RL_TYPE_AN_EN_AS_RTL(list) ( \
+ (((list)->type == FRIBIDI_TYPE_AN) || ((list)->type == FRIBIDI_TYPE_EN) | ((list)->type == FRIBIDI_TYPE_RTL)) ? FRIBIDI_TYPE_RTL : (list)->type)
 #define RL_BRACKET_TYPE(list) ((list)->bracket_type)
 #define RL_ISOLATE_LEVEL(list) ((list)->isolate_level)
 
@@ -1090,7 +1094,7 @@ fribidi_get_par_embedding_levels (
         FriBidiRun *ppn;
         for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)
           {
-            FriBidiCharType this_type = RL_TYPE(ppn);
+            FriBidiCharType this_type = RL_TYPE_AN_EN_AS_RTL(ppn);
 
             /* Calculate level like in resolve implicit levels below to prevent
                embedded levels not to match the base_level */
@@ -1111,11 +1115,11 @@ fribidi_get_par_embedding_levels (
         if (!found)
           {
             /* Search for a preceding strong */
-            int prec_strong_level = embedding_level;
+            int prec_strong_level = embedding_level; /* TBDov! Extract from Isolate level in effect */
             int iso_level = RL_ISOLATE_LEVEL(ppairs->open);
             for (ppn = ppairs->open->prev; ppn->type != FRIBIDI_TYPE_SENTINEL; ppn=ppn->prev)
               {
-                FriBidiCharType this_type = RL_TYPE(ppn);
+                FriBidiCharType this_type = RL_TYPE_AN_EN_AS_RTL(ppn);
                 if (FRIBIDI_IS_STRONG (this_type) && RL_ISOLATE_LEVEL(ppn) == iso_level)
                   {
                     prec_strong_level = RL_LEVEL (ppn) +
