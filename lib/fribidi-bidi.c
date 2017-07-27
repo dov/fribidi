@@ -1020,14 +1020,23 @@ fribidi_get_par_embedding_levels (
                                              * num_iso_levels);
     memset(bracket_stack_size, 0, sizeof(bracket_stack_size[0])*num_iso_levels);
 
-    /* Build the bd16 pair stack. TBD - Do one isolation layer at atime */
+    /* Build the bd16 pair stack. TBD - Do one isolation run sequence at atime */
+    int last_level = RL_LEVEL(main_run_list);
+    int last_iso_level = 0;
     for_run_list (pp, main_run_list)
       {
+        int level = RL_LEVEL(pp);
         int iso_level = RL_ISOLATE_LEVEL(pp);
 
+        /* Interpret the isolating run sequence as such that they
+           end at a change in the level, unless the iso_level has been
+           raised. */
+        if (level != last_level && last_iso_level == iso_level)
+          bracket_stack_size[last_iso_level] = 0;
+    
         if (!bracket_stack[iso_level])
           bracket_stack[iso_level] = fribidi_malloc (sizeof (bracket_stack[0])
-                                                       * FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS);
+                                                     * FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS);
         FriBidiBracketType brack_prop = RL_BRACKET_TYPE(pp);
         if (FRIBIDI_IS_BRACKET(&brack_prop))
           {
@@ -1058,6 +1067,8 @@ fribidi_get_par_embedding_levels (
                   }
               }
           }
+        last_level = level;
+        last_iso_level = iso_level;
       }
 
     /* The list must now be sorted for the next algo to work! */

@@ -495,5 +495,73 @@ returned order: 3 2 1 0
    - From UAX#9: "directional isolates have the effect of a neutral. E.g. they don't affect the surrounding". And since neutrals are raised in I1,I2 the isolates should be raised as well.
    - Found the reason for the Line 60 error! I was not taking the override flag into account when encountiring an isolate character. 
    - Down to 10 errors.
-   - Implemented the rule "Within this scope, bidirectional types EN and AN are treated as R" of N0. Down to 8 errors.
-   
+   - Implemented the rule "Within this scope, bidirectional types EN and AN are treated as R" of N0. Down to 8 errors. Saved in: file:err-it8.txt
+   - Summary:
+   | Line | Reason                                         |
+   |------+------------------------------------------------|
+   |  249 | How to retrieve the embedding level?           |
+   |  262 | Disruptiveness of Embedding and override chars |
+   |  263 | "                                              |
+   |  264 | "                                              |
+   |  270 | ? but probably the embedding level             |
+   |  281 | "                                              |
+   |  286 | Canonical equivalent characters                |
+   |  287 | "                                              |
+    - [ ] Idea of how to retrieve the embedding level. Add it to the run length and encode it for each rl as we sweep through.
+* <2017-07-23 Sun>
+** Use Canonical Equivalence
+   - Use Canonical Equivalence for the unicode tables.
+   - See: http://unicode.org/reports/tr15/tr15-18.html, Annex 4 for example of how to parse
+   - Example:
+#+BEGIN_SRC python
+s = '00E1;LATIN SMALL LETTER A WITH ACUTE;Ll;0;L;0061 0301;;;;N;LATIN SMALL LETTER A ACUTE;;00C1;;00C1'
+A = s.split(';')
+return A[5]
+#+END_SRC   
+
+#+RESULTS:
+: 0061 0301
+   - Bracket characters that have mappings. Note that by using logics as below in the mapping table we basically ignore modifiers like <wide>,<narrow>,<super> etc when matching brackets.
+#+BEGIN_SRC python
+  def dehex(v):
+    try:
+      return int(v,16)
+    except:
+      return -1
+
+  br = {}
+  with open('gen.tab/unidata/BidiBrackets.txt') as fh:
+    for line in fh:
+       if len(line)==1 or line[0]=='#':
+          continue
+       a = line.split(';')
+       br[dehex(a[0])] = dehex(a[1])
+
+  eqv = {}
+  with open('gen.tab/unidata/UnicodeData.txt') as fh:
+    for line in fh:
+      a = line.split(';')
+      ch = dehex(a[0])
+      if not ch in br:
+        continue
+      ce = [v for v in [dehex(v) for v in a[5].split(' ') if len(v)] if v>0]
+      if len(ce)==1:   # Skip all annotations like <wide>,<super>, etc.
+        eqv[ch]=ce[0]
+
+  for k in sorted(eqv.keys()):
+    print '%x'%k,'%x'%eqv[k]
+#+END_SRC   
+
+#+RESULTS:
+* <2017-07-27 Thu>
+** Isolating run sequence
+   - Implemented isolating run sequence restriction in BD16 by the following heuristic rule: "Interpret the isolating run sequence as such that end at a change in the level, unless the iso_level has been          raised".
+   - This simple change in fribidi-bidi reduced the number of errors to 3!
+   - Commit: 
+   - Remaining errors (from file:err-it9.txt:
+   | Line | Reason                                         |
+   |------+------------------------------------------------|
+   |  249 | How to retrieve the embedding level?           |
+   |  286 | Canonical equivalent characters                |
+   |  287 | "                                              |
+   - [ ] Continue with the canonical characters.
