@@ -544,7 +544,7 @@ return A[5]
       ch = dehex(a[0])
       if not ch in br:
         continue
-      ce = [v for v in [dehex(v) for v in a[5].split(' ') if len(v)] if v>0]
+      ce = [w for w in [dehex(v) for v in a[5].split(' ')] if w>0]
       if len(ce)==1:   # Skip all annotations like <wide>,<super>, etc.
         eqv[ch]=ce[0]
 
@@ -565,3 +565,19 @@ return A[5]
    |  286 | Canonical equivalent characters                |
    |  287 | "                                              |
    - [ ] Continue with the canonical characters.
+** Canonical equivalence
+   - Rewriting file:gen.tab/gen-brackets-tab.c
+   - [ ] Why does make in the gen.tab dir not compile the file?
+   - Run the generation as:
+#+BEGIN_SRC sh
+./gen.tab/gen-brackets-tab 2 ./gen.tab/unidata/BidiBrackets.txt ./gen.tab/unidata/UnicodeData.txt 
+#+END_SRC   
+  - Make by:
+#+BEGIN_SRC sh
+env CPPFLAGS='-g -Wall' make gen-brackets-tab V=1 
+#+END_SRC  
+   - Finished it. Down to 1 error in err-10.txt
+   | Line | Reason                                         |
+   |------+------------------------------------------------|
+   |  249 | How to retrieve the embedding level?           |
+  - Commit: 

@@ -9,7 +9,7 @@ int main(int argc, char **argv)
   FriBidiCharSet utf8 = fribidi_parse_charset ("UTF-8");
   FriBidiChar ubuf[BUFSIZ];
 
-  const char *buf="()⌈ ⌉";
+  const char *buf="〈〉〈〉";
   int len = fribidi_charset_to_unicode (utf8, buf, strlen(buf), ubuf);
 
   for (int i=0; i<len; i++)

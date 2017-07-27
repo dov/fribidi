@@ -64,10 +64,7 @@ fribidi_get_bracket (
   else
   {
     is_open = (char_type & FRIBIDI_TYPE_BRACKET_OPEN) != 0;
-    if (is_open)
-      bracket_type.bracket_id = ch;
-    else
-      bracket_type.bracket_id = FRIBIDI_GET_BRACKETS (ch);
+    bracket_type.bracket_id = FRIBIDI_GET_BRACKETS (ch);
   }
   bracket_type.is_open = is_open;
 

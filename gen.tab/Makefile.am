@@ -110,6 +110,7 @@ gen_brackets_tab = gen-brackets-tab$(EXEEXT)
 
 brackets.tab.i: \
 		BidiBrackets.txt \
+		UnicodeData.txt \
 		fribidi-unicode-version.h \
 		$(gen_brackets_tab_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) $(gen_brackets_tab)
