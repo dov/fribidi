@@ -58,9 +58,7 @@ struct _FriBidiRunStruct
   FriBidiBracketType bracket_type;
 
   /* Additional links for connecting the isolate tree */
-  FriBidiRun *next_isolate;  /* next node of the same isolate level.
-                                Only non-null if next is of a higher
-                                isolate level. */
+  FriBidiRun *prev_isolate, *next_isolate;  
 };
 
 

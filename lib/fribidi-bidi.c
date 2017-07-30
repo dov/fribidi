@@ -83,6 +83,10 @@ merge_with_prev (
   first->next = second->next;
   first->next->prev = first;
   RL_LEN (first) += RL_LEN (second);
+  if (second->next_isolate)
+    second->next_isolate->prev_isolate = first;
+  first->next_isolate = second->next_isolate;
+
   fribidi_free (second);
   return first;
 }
@@ -129,13 +133,19 @@ compact_neutrals (
 }
 
 /* Search for an adjacent run in the forward or backward direction.
-   This search is O(n) and thus algorithms using it become O(n^2).
-   The concept should be replaced with isolate adjacent runs in the
-   forward and backward directions.
+   It uses the next_isolate and prev_isolate run for short circuited searching.
  */
+
+/* The static sentinel is used to signal the end of an isolating
+   sequence */
+static FriBidiRun sentinel = { NULL, NULL, 0,0, FRIBIDI_TYPE_SENTINEL, -1,-1,FRIBIDI_NO_BRACKET, NULL, NULL };
+
 static FriBidiRun *get_adjacent_run(FriBidiRun *list, fribidi_boolean forward, fribidi_boolean skip_neutral)
 {
-  FriBidiRun *ppp = forward ? list->next : list->prev;
+  FriBidiRun *ppp = forward ? list->next_isolate : list->prev_isolate;
+  if (!ppp)
+    return &sentinel;
+
   while(ppp)
     {
       FriBidiCharType ppp_type = RL_TYPE (ppp);
@@ -147,15 +157,22 @@ static FriBidiRun *get_adjacent_run(FriBidiRun *list, fribidi_boolean forward, f
          beyond the PDI to see what lies behind. When looking
          backwards, this is not necessary as the leading isolate
          run has already been assigned the resolved level. */
-      if (ppp->isolate_level > list->isolate_level
+      if (ppp->isolate_level > list->isolate_level   /* <- How can this be true? */
           || (forward && ppp_type == FRIBIDI_TYPE_PDI)
           || (skip_neutral && !FRIBIDI_IS_STRONG(ppp_type)))
         {
-          ppp = forward ? ppp->next : ppp->prev;
+          FriBidiRun *pppn = forward ? ppp->next_isolate : ppp->prev_isolate;
+
+          if (pppn)
+            ppp = pppn;
+          else
+            ppp = &sentinel;
+
           continue;
         }
       break;
     }
+
   return ppp;
 }
 
@@ -588,6 +605,12 @@ fribidi_get_par_embedding_levels (
       int isolate_level;
     } *status_stack;
     FriBidiRun temp_link;
+    FriBidiRun **run_per_isolate_level; /* Connect the isolate levels */
+
+    run_per_isolate_level = fribidi_malloc(sizeof(run_per_isolate_level[0])
+                                           * FRIBIDI_BIDI_MAX_RESOLVED_LEVELS);
+    memset(run_per_isolate_level, 0, sizeof(run_per_isolate_level[0])
+           * FRIBIDI_BIDI_MAX_RESOLVED_LEVELS);
 
 /* explicits_list is a list like main_run_list, that holds the explicit
    codes that are removed from main_run_list, to reinsert them later by
@@ -775,6 +798,18 @@ fribidi_get_par_embedding_levels (
 	}
     }
 
+    /* Build the isolate_level connections */
+    for_run_list (pp, main_run_list)
+    {
+      int isolate_level = RL_ISOLATE_LEVEL (pp);
+      if (run_per_isolate_level[isolate_level])
+        {
+          run_per_isolate_level[isolate_level]->next_isolate = pp;
+          pp->prev_isolate = run_per_isolate_level[isolate_level];
+        }
+      run_per_isolate_level[isolate_level] = pp;
+    }
+
     /* Implementing X8. It has no effect on a single paragraph! */
     level = base_level;
     override = FRIBIDI_TYPE_ON;
@@ -782,6 +817,7 @@ fribidi_get_par_embedding_levels (
     over_pushed = 0;
 
     fribidi_free (status_stack);
+    fribidi_free (run_per_isolate_level);
   }
   /* X10. The remaining rules are applied to each run of characters at the
      same level. For each run, determine the start-of-level-run (sor) and

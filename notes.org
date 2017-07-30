@@ -585,3 +585,7 @@ env CPPFLAGS='-g -Wall' make gen-brackets-tab V=1
 ** Last error
    - Last error was line 249. The reason was simply that the when looking for a strong character I wasn't mapping the AN and EN to RTL as I  should.
    - Down to 0 errors! 
+* <2017-07-31 Mon>
+** Optimization
+   - Created short-circuit pointers for searching for the next and previous isolate characters. This should speed up the algorithm quite a bit.
+   - [X] TBD - The fall down to lower isolate levels in ~get_adjacent_run()~ is wrong! Need to return sentinel if this happens.
