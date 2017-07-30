@@ -581,3 +581,7 @@ env CPPFLAGS='-g -Wall' make gen-brackets-tab V=1
    |------+------------------------------------------------|
    |  249 | How to retrieve the embedding level?           |
   - Commit: 
+* <2017-07-29 Sat>
+** Last error
+   - Last error was line 249. The reason was simply that the when looking for a strong character I wasn't mapping the AN and EN to RTL as I  should.
+   - Down to 0 errors! 

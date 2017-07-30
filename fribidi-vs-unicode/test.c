@@ -384,5 +384,8 @@ done:
 
     if (numerrs)
 	g_printerr ("%d errors out of %d total tests\n", numerrs, numtests);
+    else
+        printf("No errors found! :-)\n");
+
     return numerrs;
 }

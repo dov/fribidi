@@ -502,7 +502,7 @@ fribidi_get_par_embedding_levels (
   FriBidiLevel *embedding_levels
 )
 {
-  FriBidiLevel base_level, max_level = 0;
+  FriBidiLevel base_level, *base_level_per_iso_level = NULL, max_level = 0;
   FriBidiParType base_dir;
   FriBidiRun *main_run_list = NULL, *explicits_list = NULL, *pp;
   fribidi_boolean status = false;
@@ -558,6 +558,10 @@ fribidi_get_par_embedding_levels (
   base_dir = FRIBIDI_LEVEL_TO_DIR (base_level);
   DBG2 ("  base level : %c", fribidi_char_from_level (base_level));
   DBG2 ("  base dir   : %c", fribidi_char_from_bidi_type (base_dir));
+
+  base_level_per_iso_level = fribidi_malloc(sizeof(base_level_per_iso_level[0]) *
+                                            FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL);
+  base_level_per_iso_level[0] = base_level;
 
 # if DEBUG
   if UNLIKELY
@@ -738,7 +742,7 @@ fribidi_get_par_embedding_levels (
                 
 	  RL_LEVEL (pp) = level;
           RL_ISOLATE_LEVEL (pp) = isolate_level++;
-
+          base_level_per_iso_level[isolate_level] = new_level;
 
 	  if (!FRIBIDI_IS_NEUTRAL (override))
 	    RL_TYPE (pp) = override;
@@ -924,6 +928,8 @@ fribidi_get_par_embedding_levels (
       if (FRIBIDI_IS_STRONG (prev_type))
 	last_strong_stack[iso_level] = prev_type;
 
+      /* W2 ??? */
+      
       /* W3: Change ALs to R. */
       if (this_type == FRIBIDI_TYPE_AL)
 	{
@@ -1097,8 +1103,8 @@ fribidi_get_par_embedding_levels (
     FriBidiPairingNode *ppairs = pairing_nodes;
     while(ppairs)
       {
-        // TBD: How is the embedding direction chosen?
-        int embedding_level = base_level; /* Update for isolate! */
+        int iso_level = ppairs->open->isolate_level;
+        int embedding_level = base_level_per_iso_level[iso_level]; 
         
         // Find matching strong.
         fribidi_boolean found = false;
@@ -1140,10 +1146,9 @@ fribidi_get_par_embedding_levels (
                   }
               }
             
-
             for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)
               {
-                FriBidiCharType this_type = RL_TYPE(ppn);
+                FriBidiCharType this_type = RL_TYPE_AN_EN_AS_RTL(ppn);
                 if (FRIBIDI_IS_STRONG (this_type) && RL_ISOLATE_LEVEL(ppn) == iso_level)
                   {
                     /* By constraint this is opposite the embedding direction,
@@ -1403,6 +1408,8 @@ out:
     free_run_list (main_run_list);
   if UNLIKELY
     (explicits_list) free_run_list (explicits_list);
+  if (base_level_per_iso_level)
+    fribidi_free (base_level_per_iso_level);
 
   return status ? max_level + 1 : 0;
 }
