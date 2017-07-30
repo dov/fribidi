@@ -8,7 +8,8 @@ int main(int argc, char **argv)
   FriBidiLevel *levels = NULL;
   FriBidiCharType *types = NULL;
   FriBidiBracketType *bracket_types = NULL;
-  const char * text="AB(CD[&ef]!)gh";  // The first N0 example from UAX#9
+  const char * text="AB(CD[&ef]!)gh";  /* The first N0 example from UAX#9 */
+  int i;
 
   int argp=1;
   if (argc > argp)
@@ -27,7 +28,7 @@ int main(int argc, char **argv)
   int types_len = code_points_len;
   levels = g_malloc (sizeof (FriBidiLevel) * code_points_len);
 
-  for (int i=0; i<types_len; i++)
+  for (i=0; i<types_len; i++)
     {
       types[i] = fribidi_get_bidi_type(code_points[i]);
       bracket_types[i] = fribidi_get_bracket(code_points[i]);
@@ -37,7 +38,7 @@ int main(int argc, char **argv)
                                     &base_dir,
                                     levels);
   
-  for (int i=0; i<code_points_len; i++)
+  for (i=0; i<code_points_len; i++)
     {
       char buf[BUFSIZ];
 
@@ -46,11 +47,11 @@ int main(int argc, char **argv)
     }
   printf("\n");
 
-  for (int i=0; i<types_len; i++)
+  for (i=0; i<types_len; i++)
     printf("%-3s ", fribidi_get_bidi_type_name(types[i]));
   printf("\n");
 
-  for (int i=0; i<types_len; i++)
+  for (i=0; i<types_len; i++)
     printf("%-2d  ", levels[i]);
   printf("\n");
 

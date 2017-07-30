@@ -1,5 +1,3 @@
-/* Save of failed effort to use levels instead of LTR or RTL */
-
 /* FriBidi
  * fribidi-bidi.c - bidirectional algorithm
  *
@@ -388,7 +386,7 @@ struct _FriBidiPairingNodeStruct {
 };
 typedef struct _FriBidiPairingNodeStruct FriBidiPairingNode;
 
-// Push a new entry to the pairing linked list
+/* Push a new entry to the pairing linked list */
 static FriBidiPairingNode * pairing_nodes_push(FriBidiPairingNode *nodes,
                                                FriBidiRun *open,
                                                FriBidiRun *close)
@@ -1051,7 +1049,7 @@ fribidi_get_par_embedding_levels (
                 if (bracket_stack_size[iso_level]==FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS)
                   break;
     
-                // push onto the pair stack
+                /* push onto the pair stack */
                 bracket_stack[iso_level][bracket_stack_size[iso_level]++] = pp;
               }
             else
@@ -1106,7 +1104,7 @@ fribidi_get_par_embedding_levels (
         int iso_level = ppairs->open->isolate_level;
         int embedding_level = base_level_per_iso_level[iso_level]; 
         
-        // Find matching strong.
+        /* Find matching strong. */
         fribidi_boolean found = false;
         FriBidiRun *ppn;
         for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)

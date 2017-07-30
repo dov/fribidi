@@ -1,4 +1,4 @@
-// A test program for fribidi_get_bracket()
+/* A test program for fribidi_get_bracket() */
 #include "fribidi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,11 +8,12 @@ int main(int argc, char **argv)
 {
   FriBidiCharSet utf8 = fribidi_parse_charset ("UTF-8");
   FriBidiChar ubuf[BUFSIZ];
-
+  int i;
   const char *buf="〈〉〈〉";
+
   int len = fribidi_charset_to_unicode (utf8, buf, strlen(buf), ubuf);
 
-  for (int i=0; i<len; i++)
+  for (i=0; i<len; i++)
     {
       FriBidiBracketType bracketing_type = fribidi_get_bracket(ubuf[i]);
 

@@ -274,11 +274,18 @@ main (int argc, char **argv)
         gboolean matches;
         int types_len = code_points_len;
         int levels_len = types_len;
+        FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
 
         for (i=0; i<code_points_len; i++)
           {
-            types[i] = fribidi_get_bidi_type(code_points[i]); 
-            bracket_types[i] = fribidi_get_bracket(code_points[i]);
+            types[i] = fribidi_get_bidi_type(code_points[i]);
+
+            /* Note the optimization that a bracket is always
+               of type neutral */
+            if (types[i] == FRIBIDI_TYPE_ON)
+                bracket_types[i] = fribidi_get_bracket(code_points[i]);
+            else
+                bracket_types[i] = NoBracket;
           }
 
         if ((paragraph_dir & (1<<base_dir_mode)) == 0)

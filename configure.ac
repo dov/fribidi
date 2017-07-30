@@ -124,7 +124,7 @@ AC_CHECK_SIZEOF(wchar_t)
 changequote(,)dnl
 if test "x$GCC" = "xyes"; then
   # ToDov: Replace c11 with -ansi when finished debugging!
-  CFLAGS="$CFLAGS -Wall -std=c11 -Wno-unused-result -Wno-switch -Wno-deprecated-declarations"
+  CFLAGS="$CFLAGS -Wall -ansi -Wno-unused-result -Wno-switch -Wno-deprecated-declarations"
 fi
 changequote([,])dnl
 
