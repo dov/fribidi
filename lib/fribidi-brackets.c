@@ -20,7 +20,7 @@
  * along with GNU FriBidi; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
- * For licensing issues, contact <license@farsiweb.info> or write to
+ * For licensing issues, contact <fribidi.license@gmail.com> or write to
  * Sharif FarsiWeb, Inc., PO Box 13445-389, Tehran, Iran.
  */
 /* 
@@ -57,9 +57,9 @@ fribidi_get_bracket (
      bracket_id = 0 if the character is not a bracket.
    */
   char_type = FRIBIDI_GET_BRACKET_TYPE (ch);
-  fribidi_boolean is_open = 0;
+  fribidi_boolean is_open = false;
 
-  if (char_type == 0) 
+  if (char_type == 0)
     bracket_type.bracket_id = 0;
   else
   {
@@ -76,14 +76,25 @@ fribidi_get_bracket_types (
   /* input */
   const FriBidiChar *str,
   const FriBidiStrIndex len,
+  const FriBidiCharType *types,
   /* output */
   FriBidiBracketType *btypes
 )
 {
+  const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
   register FriBidiStrIndex i = len;
   for (; i; i--)
     {
-      *btypes++ = fribidi_get_bracket (*str);
+      /* Optimization that bracket must be of types ON */
+      if (types[i] == FRIBIDI_TYPE_ON)
+      {
+        const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
+	*btypes = NoBracket;
+      }
+      else
+	*btypes = fribidi_get_bracket (*str);
+
+      btypes++;
       str++;
     }
 }

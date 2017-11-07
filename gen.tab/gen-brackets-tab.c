@@ -1,12 +1,6 @@
 /* FriBidi
  * gen-brackets-tab.c - generate brackets.tab.i
  *
- * $Id: gen-brackets-tab.c,v 1.14 2006-01-31 03:23:12 behdad Exp $
- * $Author: behdad $
- * $Date: 2006-01-31 03:23:12 $
- * $Revision: 1.14 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/gen.tab/gen-brackets-tab.c,v $
- *
  * Author:
  *   Behdad Esfahbod, 2001, 2002, 2004
  *   Dov Grobgeld 2017
@@ -30,7 +24,7 @@
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA
  * 
- * For licensing issues, contact <license@farsiweb.info>.
+ * For licensing issues, contact <fribidi.license@gmail.com>.
  */
 
 #include <common.h>
@@ -175,7 +169,7 @@ read_unicode_data_txt_equivalence (
       if (i==1)
         continue;
 
-      // TBD split and parse ce
+      /* split and parse ce */
       char *p = ce_string;
       int ce = -1;
       int in_tag = 0;

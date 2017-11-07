@@ -262,6 +262,7 @@ main (int argc, char **argv)
 	    FriBidiParType base_dir;
 	    int i, j;
 	    gboolean matches;
+            int max_level;
 
 	    if ((base_dir_flags & (1<<base_dir_mode)) == 0)
 		continue;
@@ -274,21 +275,21 @@ main (int argc, char **argv)
 	    case 2: base_dir = FRIBIDI_PAR_RTL; break;
 	    }
 
-	    fribidi_get_par_embedding_levels (types,
-                                              NULL, /* Brackets are not used in the BidiTest.txt file */
-                                              types_len,
-					      &base_dir,
-					      levels);
+	    max_level = fribidi_get_par_embedding_levels_ex (types,
+                                                             NULL, /* Brackets are not used in the BidiTest.txt file */
+                                                             types_len,
+                                                             &base_dir,
+                                                             levels);
 
 	    for (i = 0; i < types_len; i++)
 	        ltor[i] = i;
 
-	    fribidi_reorder_line (0 /*FRIBIDI_FLAG_REORDER_NSM*/,
-				  types, types_len,
-				  0, base_dir,
-				  levels,
-				  NULL,
-				  ltor);
+	    max_level = fribidi_reorder_line (0 /*FRIBIDI_FLAG_REORDER_NSM*/,
+                                              types, types_len,
+                                              0, base_dir,
+                                              levels,
+                                              NULL,
+                                              ltor);
 
 	    j = 0;
 	    for (i = 0; i < types_len; i++)
@@ -347,7 +348,8 @@ main (int argc, char **argv)
 		    g_printerr (" %d", ltor[i]);
 		g_printerr ("\n");
 
-		if (debug) {
+		if (debug)
+                  {
 		    FriBidiParType base_dir;
 
 		    fribidi_set_debug (1);
@@ -358,11 +360,12 @@ main (int argc, char **argv)
 		    case 2: base_dir = FRIBIDI_PAR_RTL; break;
 		    }
 
-		    fribidi_get_par_embedding_levels (types,
-                                                      NULL, /* No bracket types */
-                                                      types_len,
-						      &base_dir,
-						      levels);
+		    max_level = fribidi_get_par_embedding_levels_ex (
+                      types,
+                      NULL, /* No bracket types */
+                      types_len,
+                      &base_dir,
+                      levels);
 
 		    fribidi_set_debug (0);
 		}

@@ -1,17 +1,13 @@
 /* FriBidi
- * gen-brackets-tab.c - generate brackets.tab.i
- *
- * $Id: gen-brackets-tab.c,v 1.14 2006-01-31 03:23:12 behdad Exp $
- * $Author: behdad $
- * $Date: 2006-01-31 03:23:12 $
- * $Revision: 1.14 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/gen.tab/gen-brackets-tab.c,v $
+ * gen-brackets-type-tab.c - generate brackets.tab.i
  *
  * Author:
  *   Behdad Esfahbod, 2001, 2002, 2004
+ *   Dov Grobgeld 2017
  *
  * Copyright (C) 2004 Sharif FarsiWeb, Inc
  * Copyright (C) 2001,2002,2004 Behdad Esfahbod
+ * Copyright (C) 2017 Dov Grobgeld
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,7 +24,7 @@
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA
  * 
- * For licensing issues, contact <license@farsiweb.info>.
+ * For licensing issues, contact <fribidi.license@gmail.com>.
  */
 
 #include <common.h>

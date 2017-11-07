@@ -61,7 +61,7 @@ GENERATEDSOURCES = \
 		joining-type.tab.i \
 		mirroring.tab.i \
 		brackets.tab.i \
-                brackets-type.tab.i 
+		brackets-type.tab.i 
 
 BUILT_SOURCES = \
 		$(GENERATEDSOURCES) \

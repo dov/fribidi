@@ -30,7 +30,7 @@
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA
  * 
- * For licensing issues, contact <license@farsiweb.info>.
+ * For licensing issues, contact <fribidi.license@gmail.com>.
  */
 
 #include "common.h"
@@ -86,15 +86,13 @@ FRIBIDI_ENTRY FriBidiLevel
 fribidi_log2vis_get_embedding_levels (
   const FriBidiCharType *bidi_types,	/* input list of bidi types as returned by
 					   fribidi_get_bidi_types() */
-  const FriBidiBracketType *bracket_types,	/* input list of bidi types as returned by
-					   fribidi_get_bracket_types() */
   const FriBidiStrIndex len,	/* input string length of the paragraph */
   FriBidiParType *pbase_dir,	/* requested and resolved paragraph
 				 * base direction */
   FriBidiLevel *embedding_levels	/* output list of embedding levels */
 )
 {
-  return fribidi_get_par_embedding_levels (bidi_types, bracket_types, len, pbase_dir, embedding_levels);
+  return fribidi_get_par_embedding_levels (bidi_types, len, pbase_dir, embedding_levels);
 }
 
 FRIBIDI_ENTRY FriBidiCharType
@@ -223,12 +221,15 @@ fribidi_log2vis (
   fribidi_assert (pbase_dir);
 
   bidi_types = fribidi_malloc (len * sizeof bidi_types[0]);
-  bracket_types = fribidi_malloc (len * sizeof bracket_types[0]);
   if (!bidi_types)
     goto out;
 
+  bracket_types = fribidi_malloc (len * sizeof bracket_types[0]);
+  if (!bracket_types)
+    goto out;
+
   fribidi_get_bidi_types (str, len, bidi_types);
-  fribidi_get_bracket_types (str, len, bracket_types);
+  fribidi_get_bracket_types (str, len, bidi_types, bracket_types);
 
   if (!embedding_levels)
     {
@@ -238,7 +239,7 @@ fribidi_log2vis (
       private_embedding_levels = true;
     }
 
-  max_level = fribidi_get_par_embedding_levels (bidi_types, bracket_types, len, pbase_dir,
+  max_level = fribidi_get_par_embedding_levels (bidi_types, len, pbase_dir,
 						embedding_levels) - 1;
   if UNLIKELY
     (max_level < 0) goto out;
@@ -311,6 +312,27 @@ out:
     fribidi_free (bidi_types);
 
   return status ? max_level + 1 : 0;
+}
+
+FRIBIDI_ENTRY FriBidiLevel
+fribidi_get_par_embedding_levels (
+  /* input */
+  const FriBidiCharType *bidi_types,
+  const FriBidiStrIndex len,
+  /* input and output */
+  FriBidiParType *pbase_dir,
+  /* output */
+  FriBidiLevel *embedding_levels
+)
+{
+  return fribidi_get_par_embedding_levels_ex (/* input */
+                                              bidi_types,
+                                              NULL, /* No bracket_types */
+                                              len,
+                                              /* input and output */
+                                              pbase_dir,
+                                              /* output */
+                                              embedding_levels);
 }
 
 #endif /* !FRIBIDI_NO_DEPRECATED */
