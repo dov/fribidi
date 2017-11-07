@@ -35,6 +35,13 @@ env.Program('test-bracketing',
                         'HAVE_STDINT_H=1']
             )
 
+env.Program('test-bidi-bracketing',
+            ['test-bidi-bracketing.c'],
+            CPPPATH=['../lib'] + env['CPPPATH'],
+            CPPDEFINES=['HAVE_STRINGIZE=1',
+                        'HAVE_STDINT_H=1']
+            )
+
 env.Program('test-algo-n0',
             ['bd16.c',
              'algo-n0.c',

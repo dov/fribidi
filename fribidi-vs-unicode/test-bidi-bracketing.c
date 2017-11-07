@@ -34,9 +34,11 @@ int main(int argc, char **argv)
       bracket_types[i] = fribidi_get_bracket(code_points[i]);
     }
 
-  fribidi_get_par_embedding_levels (types, bracket_types, types_len,
-                                    &base_dir,
-                                    levels);
+  /* Use if to get around ignored return code */
+  if (fribidi_get_par_embedding_levels_ex (types, bracket_types, types_len,
+                                           &base_dir,
+                                           levels))
+    ;
   
   for (i=0; i<code_points_len; i++)
     {

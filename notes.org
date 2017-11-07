@@ -589,3 +589,52 @@ env CPPFLAGS='-g -Wall' make gen-brackets-tab V=1
 ** Optimization
    - Created short-circuit pointers for searching for the next and previous isolate characters. This should speed up the algorithm quite a bit.
    - [X] TBD - The fall down to lower isolate levels in ~get_adjacent_run()~ is wrong! Need to return sentinel if this happens.
+* <2017-11-07 Tue>
+** Errors
+   I don't understand what happened, but when retesting both the unicode-10 and my unicode-63 branch, I am back to 15 errors in the the character test! My plan is to solve this based on the dov-unicode63 branch as follows:
+   - [X] Commit the deprecation fixes in the unicode-10 branch.
+   - [X] Create a dov-unicode-10 branch from the dov-unicode63 branch. This is basically a rename.
+   - [X] Merge from unicode-10 ino dov-unicode-10.
+   - Examine errors:
+   | Line | Reason |
+   |------+--------|
+   |   60 |        |
+   |  101 |        |
+   |  111 |        |
+   |  112 |        |
+   |  248 |        |
+   |  249 |        |
+   |  250 |        |
+   |  255 |        |
+   |  259 |        |
+   |  266 |        |
+   |  268 |        |
+   |  270 |        |
+   |  277 |        |
+   |  279 |        |
+   |  281 |        |
+   - Start with 101 which is only 4 chars long.
+#+BEGIN_EXAMPLE
+failure on line 101
+input is: 05D0 2067 202A 0041;1;1;1 1 x 4;3 1 0
+base dir: RTL
+expected levels: 1 1 x 4
+returned levels: 1 1 1 2
+expected order: 3 1 0
+returned order: 3 0
+#+END_EXAMPLE
+** Debugging
+   - Compile with the following command line:
+#+BEGIN_SRC sh
+env CFLAGS='-fPIC -g -O0' ./configure --prefix=/usr/local --with-pic
+#+END_SRC   
+   - Compile test-character with scons (doesn't really matter, except the bin target is different for gdb)
+   - gdb on ~test-character~.
+   - Run in gdb:
+#+BEGIN_EXAMPLE
+run --debug line101.txt
+#+END_EXAMPLE      
+** Comment
+   - The ~bidi-type.tab.i~ wasn't rebuild by make clean, make, etc!
+   - This solved all errors! Moving back to unicode-10.
+   
