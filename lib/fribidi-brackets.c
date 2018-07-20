@@ -46,7 +46,7 @@ fribidi_get_bracket (
 )
 {
   FriBidiBracketType bracket_type;
-  register fribidi_uint8 char_type;
+  register uint8_t char_type = FRIBIDI_GET_BRACKET_TYPE (ch);
 
   /* The bracket type from the table may be:
         0 - Not a bracket
@@ -56,17 +56,17 @@ fribidi_get_bracket (
      This will be recodeded into the FriBidiBracketType as having a
      bracket_id = 0 if the character is not a bracket.
    */
-  char_type = FRIBIDI_GET_BRACKET_TYPE (ch);
   fribidi_boolean is_open = false;
 
   if (char_type == 0)
-    bracket_type.bracket_id = 0;
+    bracket_type = FRIBIDI_NO_BRACKET;
   else
   {
     is_open = (char_type & FRIBIDI_TYPE_BRACKET_OPEN) != 0;
-    bracket_type.bracket_id = FRIBIDI_GET_BRACKETS (ch);
+    bracket_type = FRIBIDI_GET_BRACKETS (ch) & FRIBIDI_BRACKET_ID_MASK;
   }
-  bracket_type.is_open = is_open;
+  if (is_open)
+    bracket_type |= FRIBIDI_BRACKET_OPEN_MASK;
 
   return bracket_type;
 }
@@ -81,20 +81,17 @@ fribidi_get_bracket_types (
   FriBidiBracketType *btypes
 )
 {
-  const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
-  register FriBidiStrIndex i = len;
-  for (; i; i--)
+  FriBidiStrIndex i;
+  for (i=0; i<len; i++)
     {
       /* Optimization that bracket must be of types ON */
-      if (types[i] == FRIBIDI_TYPE_ON)
-      {
-        const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
-	*btypes = NoBracket;
-      }
-      else
+      if (*types == FRIBIDI_TYPE_ON)
 	*btypes = fribidi_get_bracket (*str);
+      else
+	*btypes = FRIBIDI_NO_BRACKET;
 
       btypes++;
+      types++;
       str++;
     }
 }

@@ -1,12 +1,6 @@
 /* FriBidi
  * fribidi-bidi.c - bidirectional algorithm
  *
- * $Id: fribidi-bidi.c,v 1.21 2007-03-15 18:09:25 behdad Exp $
- * $Author: behdad $
- * $Date: 2007-03-15 18:09:25 $
- * $Revision: 1.21 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/lib/fribidi-bidi.c,v $
- *
  * Authors:
  *   Behdad Esfahbod, 2001, 2002, 2004
  *   Dov Grobgeld, 1999, 2000, 2017
@@ -14,22 +8,22 @@
  * Copyright (C) 2004 Sharif FarsiWeb, Inc
  * Copyright (C) 2001,2002 Behdad Esfahbod
  * Copyright (C) 1999,2000,2017 Dov Grobgeld
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library, in a file named COPYING; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA
- * 
+ *
  * For licensing issues, contact <fribidi.license@gmail.com>.
  */
 
@@ -54,7 +48,6 @@
 /* Some convenience macros */
 #define RL_TYPE(list) ((list)->type)
 #define RL_LEN(list) ((list)->len)
-#define RL_POS(list) ((list)->pos)
 #define RL_LEVEL(list) ((list)->level)
 
 /* "Within this scope, bidirectional types EN and AN are treated as R" */
@@ -63,10 +56,16 @@
 #define RL_BRACKET_TYPE(list) ((list)->bracket_type)
 #define RL_ISOLATE_LEVEL(list) ((list)->isolate_level)
 
-/* Compare for equality */
-#define RL_BRACKET_TYPE_EQUAL(list1,list2) ( \
-   (list1)->bracket_type.bracket_id == (list2)->bracket_type.bracket_id \
-   && (list1)->bracket_type.is_open == (list2)->bracket_type.is_open)
+#define LOCAL_BRACKET_SIZE 16
+
+/* Pairing nodes are used for holding a pair of open/close brackets as
+   described in BD16. */
+struct _FriBidiPairingNodeStruct {
+  FriBidiRun *open;
+  FriBidiRun *close;
+  struct _FriBidiPairingNodeStruct *next;
+};
+typedef struct _FriBidiPairingNodeStruct FriBidiPairingNode;
 
 static FriBidiRun *
 merge_with_prev (
@@ -102,8 +101,8 @@ compact_list (
     for_run_list (list, list)
       if (RL_TYPE (list->prev) == RL_TYPE (list)
 	  && RL_LEVEL (list->prev) == RL_LEVEL (list)
-          && RL_BRACKET_TYPE(list).bracket_id == 0 /* Don't join brackets! */
-          && RL_BRACKET_TYPE(list->prev).bracket_id == 0
+          && RL_BRACKET_TYPE(list) == FRIBIDI_NO_BRACKET /* Don't join brackets! */
+          && RL_BRACKET_TYPE(list->prev) == FRIBIDI_NO_BRACKET
           )
       list = merge_with_prev (list);
 }
@@ -124,8 +123,8 @@ compact_neutrals (
 	    ((RL_TYPE (list->prev) == RL_TYPE (list)
 	      || (FRIBIDI_IS_NEUTRAL (RL_TYPE (list->prev))
 		  && FRIBIDI_IS_NEUTRAL (RL_TYPE (list)))))
-            && RL_BRACKET_TYPE(list).bracket_id == 0 /* Don't join brackets! */
-            && RL_BRACKET_TYPE(list->prev).bracket_id == 0
+            && RL_BRACKET_TYPE(list) == FRIBIDI_NO_BRACKET /* Don't join brackets! */
+            && RL_BRACKET_TYPE(list->prev) == FRIBIDI_NO_BRACKET
             )
 	  list = merge_with_prev (list);
       }
@@ -149,7 +148,7 @@ static FriBidiRun *get_adjacent_run(FriBidiRun *list, fribidi_boolean forward, f
   while (ppp)
     {
       FriBidiCharType ppp_type = RL_TYPE (ppp);
-      
+
       if (ppp_type == _FRIBIDI_TYPE_SENTINEL)
         break;
 
@@ -173,7 +172,7 @@ static FriBidiRun *get_adjacent_run(FriBidiRun *list, fribidi_boolean forward, f
   return ppp;
 }
 
-#if DEBUG+0
+#ifdef DEBUG
 /*======================================================================
  *  For debugging, define some functions for printing the types and the
  *  levels.
@@ -251,7 +250,7 @@ print_resolved_types (
   {
     FriBidiStrIndex i;
     for (i = RL_LEN (pp); i; i--)
-      MSG2 ("%c", fribidi_char_from_bidi_type (pp->type));
+      MSG2 ("%s ", fribidi_get_bidi_type_name (pp->type));
   }
   MSG ("\n");
 }
@@ -269,7 +268,18 @@ print_bidi_string (
 
   MSG ("  Org. types : ");
   for (i = 0; i < len; i++)
-    MSG2 ("%c", fribidi_char_from_bidi_type (bidi_types[i]));
+    MSG2 ("%s ", fribidi_get_bidi_type_name (bidi_types[i]));
+  MSG ("\n");
+}
+
+static void print_pairing_nodes(FriBidiPairingNode *nodes)
+{
+  MSG ("Pairs: ");
+  while (nodes)
+    {
+      MSG3 ("(%d, %d) ", nodes->open->pos, nodes->close->pos);
+      nodes = nodes->next;
+    }
   MSG ("\n");
 }
 #endif /* DEBUG */
@@ -393,15 +403,6 @@ fribidi_get_par_direction (
   return FRIBIDI_PAR_ON;
 }
 
-/* Pairing nodes are used for holding a pair of open/close brackets as
-   described in BD16. */
-struct _FriBidiPairingNodeStruct {
-  FriBidiRun *open;
-  FriBidiRun *close;
-  struct _FriBidiPairingNodeStruct *next;
-};
-typedef struct _FriBidiPairingNodeStruct FriBidiPairingNode;
-
 /* Push a new entry to the pairing linked list */
 static FriBidiPairingNode * pairing_nodes_push(FriBidiPairingNode *nodes,
                                                FriBidiRun *open,
@@ -413,17 +414,6 @@ static FriBidiPairingNode * pairing_nodes_push(FriBidiPairingNode *nodes,
   node->next = nodes;
   nodes = node;
   return nodes;
-}
-
-static void print_pairing_nodes(FriBidiPairingNode *nodes)
-{
-  MSG ("Pairs: ");
-  while (nodes)
-    {
-      MSG3 ("(%d, %d) ", nodes->open->pos, nodes->close->pos);
-      nodes = nodes->next;
-    }
-  MSG ("\n");
 }
 
 /* Sort by merge sort */
@@ -482,11 +472,12 @@ pairing_nodes_sorted_merge(FriBidiPairingNode *nodes1,
 
 static void sort_pairing_nodes(FriBidiPairingNode **nodes)
 {
+  FriBidiPairingNode *front, *back;
+
   /* 0 or 1 node case */
   if (!*nodes || !(*nodes)->next)
     return;
 
-  FriBidiPairingNode *front, *back;
   pairing_nodes_front_back_split(*nodes, &front, &back);
   sort_pairing_nodes(&front);
   sort_pairing_nodes(&back);
@@ -515,10 +506,12 @@ fribidi_get_par_embedding_levels_ex (
   FriBidiLevel *embedding_levels
 )
 {
-  FriBidiLevel base_level, *base_level_per_iso_level = NULL, max_level = 0;
+  FriBidiLevel base_level_per_iso_level[FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL];
+  FriBidiLevel base_level, max_level = 0;
   FriBidiParType base_dir;
   FriBidiRun *main_run_list = NULL, *explicits_list = NULL, *pp;
   fribidi_boolean status = false;
+  int max_iso_level = 0;
 
   if UNLIKELY
     (!len)
@@ -570,10 +563,8 @@ fribidi_get_par_embedding_levels_ex (
     }
   base_dir = FRIBIDI_LEVEL_TO_DIR (base_level);
   DBG2 ("  base level : %c", fribidi_char_from_level (base_level));
-  DBG2 ("  base dir   : %c", fribidi_char_from_bidi_type (base_dir));
+  DBG2 ("  base dir   : %s", fribidi_get_bidi_type_name (base_dir));
 
-  base_level_per_iso_level = fribidi_malloc(sizeof(base_level_per_iso_level[0]) *
-                                            FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL);
   base_level_per_iso_level[0] = base_level;
 
 # if DEBUG
@@ -601,12 +592,10 @@ fribidi_get_par_embedding_levels_ex (
       FriBidiLevel level;
       int isolate;
       int isolate_level;
-    } *status_stack;
+    } status_stack[FRIBIDI_BIDI_MAX_RESOLVED_LEVELS];
     FriBidiRun temp_link;
-    FriBidiRun **run_per_isolate_level; /* Connect the isolate levels */
+    FriBidiRun *run_per_isolate_level[FRIBIDI_BIDI_MAX_RESOLVED_LEVELS];
 
-    run_per_isolate_level = fribidi_malloc(sizeof(run_per_isolate_level[0])
-                                           * FRIBIDI_BIDI_MAX_RESOLVED_LEVELS);
     memset(run_per_isolate_level, 0, sizeof(run_per_isolate_level[0])
            * FRIBIDI_BIDI_MAX_RESOLVED_LEVELS);
 
@@ -633,8 +622,6 @@ fribidi_get_par_embedding_levels_ex (
     first_interval = 0;
     valid_isolate_count = 0;
     isolate_overflow = 0;
-    status_stack = fribidi_malloc (sizeof (status_stack[0]) *
-				   FRIBIDI_BIDI_MAX_RESOLVED_LEVELS);
 
     for_run_list (pp, main_run_list)
     {
@@ -695,7 +682,7 @@ fribidi_get_par_embedding_levels_ex (
                   isolate_overflow--;
                   RL_LEVEL (pp) = level;
                 }
-                
+
               else if (valid_isolate_count > 0)
                 {
                   /* Pop away all LRE,RLE,LRO, RLO levels
@@ -758,7 +745,7 @@ fribidi_get_par_embedding_levels_ex (
               else
                 new_level = level + 2 - (level%2);
             }
-                
+
 	  RL_LEVEL (pp) = level;
           RL_ISOLATE_LEVEL (pp) = isolate_level++;
           base_level_per_iso_level[isolate_level] = new_level;
@@ -813,9 +800,6 @@ fribidi_get_par_embedding_levels_ex (
     override = FRIBIDI_TYPE_ON;
     stack_size = 0;
     over_pushed = 0;
-
-    fribidi_free (status_stack);
-    fribidi_free (run_per_isolate_level);
   }
   /* X10. The remaining rules are applied to each run of characters at the
      same level. For each run, determine the start-of-level-run (sor) and
@@ -841,15 +825,13 @@ fribidi_get_par_embedding_levels_ex (
 # endif	/* DEBUG */
 
   /* 4. Resolving weak types. Also calculate the maximum isolate level */
-  int max_iso_level = 0;
+  max_iso_level = 0;
   DBG ("resolving weak types");
   {
-    int *last_strong_stack;
+    int last_strong_stack[FRIBIDI_BIDI_MAX_RESOLVED_LEVELS];
     FriBidiCharType prev_type_orig;
     fribidi_boolean w4;
 
-    last_strong_stack = fribidi_malloc (sizeof (int)
-                                        * FRIBIDI_BIDI_MAX_RESOLVED_LEVELS);
     last_strong_stack[0] = base_dir;
 
     for_run_list (pp, main_run_list)
@@ -900,7 +882,7 @@ fribidi_get_par_embedding_levels_ex (
                 pp = merge_with_prev (pp);
             }
 	  else
-	    RL_TYPE (pp) = prev_type; 
+	    RL_TYPE (pp) = prev_type;
 
 	  if (prev_type == next_type && RL_LEVEL (pp) == RL_LEVEL (pp->next))
 	    {
@@ -961,7 +943,7 @@ fribidi_get_par_embedding_levels_ex (
 	last_strong_stack[iso_level] = prev_type;
 
       /* W2 ??? */
-      
+
       /* W3: Change ALs to R. */
       if (this_type == FRIBIDI_TYPE_AL)
 	{
@@ -1011,8 +993,6 @@ fribidi_get_par_embedding_levels_ex (
       else
 	prev_type_orig = PREV_TYPE_OR_SOR (pp->next);
     }
-
-    fribidi_free (last_strong_stack);
   }
 
   compact_neutrals (main_run_list);
@@ -1033,40 +1013,48 @@ fribidi_get_par_embedding_levels_ex (
     /*  BD16 - Build list of all pairs*/
     int num_iso_levels = max_iso_level + 1;
     FriBidiPairingNode *pairing_nodes = NULL;
-    FriBidiRun ***bracket_stack = fribidi_malloc(sizeof(bracket_stack[0])
-                                                 * num_iso_levels);
-
-    memset(bracket_stack, 0, sizeof(bracket_stack[0])*num_iso_levels);
-
-    int *bracket_stack_size = fribidi_malloc(sizeof(bracket_stack_size[0])
-                                             * num_iso_levels);
-    memset(bracket_stack_size, 0, sizeof(bracket_stack_size[0])*num_iso_levels);
-
-    /* Build the bd16 pair stack. */
+    FriBidiRun *local_bracket_stack[FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL][LOCAL_BRACKET_SIZE];
+    FriBidiRun **bracket_stack[FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL];
+    int bracket_stack_size[FRIBIDI_BIDI_MAX_EXPLICIT_LEVEL];
     int last_level = RL_LEVEL(main_run_list);
     int last_iso_level = 0;
+
+    memset(bracket_stack, 0, sizeof(bracket_stack[0])*num_iso_levels);
+    memset(bracket_stack_size, 0, sizeof(bracket_stack_size[0])*num_iso_levels);
+
+    /* populate the bracket_size. The first LOCAL_BRACKET_SIZE entries
+       of the stack are one the stack. Allocate the rest of the entries.
+     */
+    {
+      int iso_level;
+      for (iso_level=0; iso_level < LOCAL_BRACKET_SIZE; iso_level++)
+        bracket_stack[iso_level] = local_bracket_stack[iso_level];
+
+      for (iso_level=LOCAL_BRACKET_SIZE; iso_level < num_iso_levels; iso_level++)
+        bracket_stack[iso_level] = fribidi_malloc (sizeof (bracket_stack[0])
+                                                       * FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS);
+    }
+
+    /* Build the bd16 pair stack. */
     for_run_list (pp, main_run_list)
       {
         int level = RL_LEVEL(pp);
         int iso_level = RL_ISOLATE_LEVEL(pp);
+        FriBidiBracketType brack_prop = RL_BRACKET_TYPE(pp);
 
         /* Interpret the isolating run sequence as such that they
            end at a change in the level, unless the iso_level has been
            raised. */
         if (level != last_level && last_iso_level == iso_level)
           bracket_stack_size[last_iso_level] = 0;
-    
-        if (!bracket_stack[iso_level])
-          bracket_stack[iso_level] = fribidi_malloc (sizeof (bracket_stack[0])
-                                                     * FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS);
-        FriBidiBracketType brack_prop = RL_BRACKET_TYPE(pp);
-        if (FRIBIDI_IS_BRACKET(&brack_prop))
+
+        if (brack_prop!= FRIBIDI_NO_BRACKET)
           {
-            if (brack_prop.is_open)
+            if (FRIBIDI_IS_BRACKET_OPEN(brack_prop))
               {
                 if (bracket_stack_size[iso_level]==FRIBIDI_BIDI_MAX_NESTED_BRACKET_PAIRS)
                   break;
-    
+
                 /* push onto the pair stack */
                 bracket_stack[iso_level][bracket_stack_size[iso_level]++] = pp;
               }
@@ -1076,10 +1064,10 @@ fribidi_get_par_embedding_levels_ex (
                 while (stack_idx >= 0)
                   {
                     FriBidiBracketType se_brack_prop = RL_BRACKET_TYPE(bracket_stack[iso_level][stack_idx]);
-                    if (se_brack_prop.bracket_id == brack_prop.bracket_id)
+                    if (FRIBIDI_BRACKET_ID(se_brack_prop) == FRIBIDI_BRACKET_ID(brack_prop))
                       {
                         bracket_stack_size[iso_level] = stack_idx;
-    
+
                         pairing_nodes = pairing_nodes_push(pairing_nodes,
                                                            bracket_stack[iso_level][stack_idx],
                                                            pp);
@@ -1100,7 +1088,7 @@ fribidi_get_par_embedding_levels_ex (
     if UNLIKELY
     (fribidi_debug_status ())
       {
-        print_pairing_nodes(pairing_nodes);
+        print_pairing_nodes (pairing_nodes);
       }
 # endif	/* DEBUG */
 
@@ -1110,20 +1098,20 @@ fribidi_get_par_embedding_levels_ex (
       while (ppairs)
         {
           int iso_level = ppairs->open->isolate_level;
-          int embedding_level = base_level_per_iso_level[iso_level]; 
-          
+          int embedding_level = base_level_per_iso_level[iso_level];
+
           /* Find matching strong. */
           fribidi_boolean found = false;
           FriBidiRun *ppn;
           for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)
             {
               FriBidiCharType this_type = RL_TYPE_AN_EN_AS_RTL(ppn);
-  
+
               /* Calculate level like in resolve implicit levels below to prevent
                  embedded levels not to match the base_level */
               int this_level = RL_LEVEL (ppn) +
                 (FRIBIDI_LEVEL_IS_RTL (RL_LEVEL(ppn)) ^ FRIBIDI_DIR_TO_LEVEL (this_type));
-  
+
               /* N0b */
               if (FRIBIDI_IS_STRONG (this_type) && this_level == embedding_level)
                 {
@@ -1132,7 +1120,7 @@ fribidi_get_par_embedding_levels_ex (
                   break;
                 }
             }
-          
+
           /* N0c */
           /* Search for any strong type preceding and within the bracket pair */
           if (!found)
@@ -1147,11 +1135,11 @@ fribidi_get_par_embedding_levels_ex (
                     {
                       prec_strong_level = RL_LEVEL (ppn) +
                         (FRIBIDI_LEVEL_IS_RTL (RL_LEVEL(ppn)) ^ FRIBIDI_DIR_TO_LEVEL (this_type));
-                      
+
                       break;
                     }
                 }
-              
+
               for (ppn = ppairs->open; ppn!= ppairs->close; ppn = ppn->next)
                 {
                   FriBidiCharType this_type = RL_TYPE_AN_EN_AS_RTL(ppn);
@@ -1168,24 +1156,27 @@ fribidi_get_par_embedding_levels_ex (
                     }
                 }
             }
-          
+
           ppairs = ppairs->next;
         }
-  
+
       free_pairing_nodes(pairing_nodes);
-      {
-        int i;
-        for (i=0; i<num_iso_levels; i++)
-          fribidi_free(bracket_stack[i]);
-      }
-      fribidi_free(bracket_stack);
-      fribidi_free(bracket_stack_size);
-  
+
+      if (num_iso_levels >= LOCAL_BRACKET_SIZE)
+        {
+          int i;
+          /* Only need to free the non static members */
+          for (i=LOCAL_BRACKET_SIZE; i<num_iso_levels; i++)
+            fribidi_free(bracket_stack[i]);
+        }
+
       /* Remove the bracket property and re-compact */
-      const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
-      for_run_list (pp, main_run_list)
-        pp->bracket_type = NoBracket;
-      compact_list (main_run_list);
+      {
+        const FriBidiBracketType NoBracket = FRIBIDI_NO_BRACKET;
+        for_run_list (pp, main_run_list)
+          pp->bracket_type = NoBracket;
+        compact_list (main_run_list);
+      }
     }
 
 # if DEBUG
@@ -1397,8 +1388,6 @@ out:
     free_run_list (main_run_list);
   if UNLIKELY
     (explicits_list) free_run_list (explicits_list);
-  if (base_level_per_iso_level)
-    fribidi_free (base_level_per_iso_level);
 
   return status ? max_level + 1 : 0;
 }
@@ -1507,7 +1496,7 @@ fribidi_reorder_line (
 		if (i < off || embedding_levels[i] != level)
 		  {
 		    i++;
-		    DBG ("warning: NSM(s) at the beggining of level run");
+		    DBG ("warning: NSM(s) at the beginning of level run");
 		  }
 
 		if (visual_str)

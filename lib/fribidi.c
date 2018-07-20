@@ -1,12 +1,6 @@
 /* FriBidi
  * fribidi.c - Unicode bidirectional and Arabic joining/shaping algorithms
  *
- * $Id: fribidi.c,v 1.18 2006-01-31 03:23:13 behdad Exp $
- * $Author: behdad $
- * $Date: 2006-01-31 03:23:13 $
- * $Revision: 1.18 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/lib/fribidi.c,v $
- *
  * Authors:
  *   Behdad Esfahbod, 2001, 2002, 2004
  *   Dov Grobgeld, 1999, 2000
@@ -37,7 +31,7 @@
 
 #include <fribidi.h>
 
-#if DEBUG+0
+#ifdef DEBUG
 static int flag_debug = false;
 #endif
 
@@ -46,7 +40,7 @@ fribidi_debug_status (
   void
 )
 {
-#if DEBUG+0
+#ifdef DEBUG
   return flag_debug;
 #else
   return false;
@@ -59,7 +53,7 @@ fribidi_set_debug (
   fribidi_boolean state
 )
 {
-#if DEBUG+0
+#ifdef DEBUG
   return flag_debug = state;
 #else
   return false;
@@ -75,18 +69,9 @@ const char *fribidi_version_info =
   "interface version " FRIBIDI_INTERFACE_VERSION_STRING ",\n"
   "Unicode Character Database version " FRIBIDI_UNICODE_VERSION ",\n"
   "Configure options"
-#if DEBUG+0
+#ifdef DEBUG
   " --enable-debug"
 #endif /* DEBUG */
-#if FRIBIDI_CHARSETS+0
-#else
-  " --disable-charsets"
-#endif /* !FRIBIDI_CHARSETS */
-#if FRIBIDI_USE_GLIB+0
-  " --with-glib"
-#else /* !FRIBIDI_USE_GLIB */
-  " --without-glib"
-#endif /* !FRIBIDI_USE_GLIB */
   ".\n\n"
   "Copyright (C) 2004  Sharif FarsiWeb, Inc.\n"
   "Copyright (C) 2001, 2002, 2004, 2005  Behdad Esfahbod\n"

@@ -22,12 +22,6 @@
  * 
  * For licensing issues, contact <fribidi.license@gmail.com> or write to
  * Sharif FarsiWeb, Inc., PO Box 13445-389, Tehran, Iran.
- */
-/* $Id: fribidi-brackets.h,v 1.10 2004-09-28 07:58:57 behdad Exp $
- * $Author: behdad $
- * $Date: 2004-09-28 07:58:57 $
- * $Revision: 1.10 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/lib/fribidi-brackets.h,v $
  *
  * Author(s):
  *   Behdad Esfahbod, 2001, 2002, 2004
@@ -43,8 +37,7 @@
 
 #include "fribidi-begindecls.h"
 
-#define fribidi_get_bracket_char FRIBIDI_NAMESPACE(get_bracket_char)
-/* fribidi_get_bracket_char - get bracketed character
+/* fribidi_get_bracket - get bracketed character
  *
  * This function finds the bracketed equivalent of a character as defined in
  * the file BidiBrackets.txt of the Unicode Character Database available at
@@ -63,18 +56,24 @@ FRIBIDI_ENTRY FriBidiBracketType fribidi_get_bracket (
   FriBidiChar ch		    /* input character */
 );
 
+/* fribidi_get_bracket_types - get bracketed characters
+ *
+ * This function finds the bracketed characters of an string of characters.
+ * See fribidi_get_bracket() for more information about the bracketed
+ * characters returned by this function.
+ */
 FRIBIDI_ENTRY void
 fribidi_get_bracket_types (
-  /* input */
-  const FriBidiChar *str,
-  const FriBidiStrIndex len,
-  const FriBidiCharType *types,
-  /* output */
-  FriBidiBracketType *btypes
+  const FriBidiChar *str,           /* input string */
+  const FriBidiStrIndex len,        /* input string length */
+  const FriBidiCharType *types,     /* input bidi types */
+  FriBidiBracketType *btypes        /* output bracketed characters */
 );
 
-#define FRIBIDI_IS_BRACKET(bt) ((bt)->bracket_id>0)
-#define FRIBIDI_IS_BRACKET_OPEN(bt) ((bt)->is_open>0)
+#define FRIBIDI_BRACKET_OPEN_MASK 0x80000000
+#define FRIBIDI_BRACKET_ID_MASK   0x7fffffff
+#define FRIBIDI_IS_BRACKET_OPEN(bt) ((bt & FRIBIDI_BRACKET_OPEN_MASK)>0)
+#define FRIBIDI_BRACKET_ID(bt) ((bt & FRIBIDI_BRACKET_ID_MASK))
 
 #include "fribidi-enddecls.h"
 

@@ -1,12 +1,6 @@
 /* FriBidi
  * fribidi-bidi-types.h - character bidi types
  *
- * $Id: fribidi-bidi-types.h,v 1.15 2008-11-24 17:48:31 behdad Exp $
- * $Author: behdad $
- * $Date: 2008-11-24 17:48:31 $
- * $Revision: 1.15 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/lib/fribidi-bidi-types.h,v $
- *
  * Author:
  *   Behdad Esfahbod, 2001, 2002, 2004
  *
@@ -209,7 +203,7 @@ typedef enum
 
 #else
 
-typedef fribidi_uint32 FriBidiCharType;
+typedef uint32_t FriBidiCharType;
 # define FRIBIDI_TYPE_LTR	FRIBIDI_TYPE_LTR_VAL
 # define FRIBIDI_TYPE_RTL	FRIBIDI_TYPE_RTL_VAL
 # define FRIBIDI_TYPE_AL	FRIBIDI_TYPE_AL_VAL
@@ -234,7 +228,7 @@ typedef fribidi_uint32 FriBidiCharType;
 # define FRIBIDI_TYPE_FSI	FRIBIDI_TYPE_PDF_FSI
 # define FRIBIDI_TYPE_PDI	FRIBIDI_TYPE_PDF_PDI
 
-typedef fribidi_uint32 FriBidiParType;
+typedef uint32_t FriBidiParType;
 # define FRIBIDI_PAR_LTR	FRIBIDI_TYPE_LTR_VAL
 # define FRIBIDI_PAR_RTL	FRIBIDI_TYPE_RTL_VAL
 # define FRIBIDI_PAR_ON		FRIBIDI_TYPE_ON_VAL
@@ -360,7 +354,6 @@ typedef fribidi_uint32 FriBidiParType;
 /* Functions finally */
 
 
-#define fribidi_get_bidi_type FRIBIDI_NAMESPACE(get_bidi_type)
 /* fribidi_get_bidi_type - get character bidi type
  *
  * This function returns the bidi type of a character as defined in Table 3.7
@@ -378,7 +371,6 @@ fribidi_get_bidi_type (
   FriBidiChar ch		/* input character */
 ) FRIBIDI_GNUC_CONST;
 
-#define fribidi_get_bidi_types FRIBIDI_NAMESPACE(get_bidi_types)
 /* fribidi_get_bidi_types - get bidi types for an string of characters
  *
  * This function finds the bidi types of an string of characters.  See
@@ -391,7 +383,6 @@ fribidi_get_bidi_type (
   FriBidiCharType *btypes	/* output bidi types */
 );
 
-#define fribidi_get_bidi_type_name FRIBIDI_NAMESPACE(get_bidi_type_name)
 /* fribidi_get_bidi_type_name - get bidi type name
  *
  * This function returns the bidi type name of a character type.  The

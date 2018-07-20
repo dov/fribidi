@@ -1,12 +1,6 @@
 /* FriBidi
  * fribidi-unicode.h - general Unicode definitions
  *
- * $Id: fribidi-unicode.h,v 1.7 2006-01-31 03:23:13 behdad Exp $
- * $Author: behdad $
- * $Date: 2006-01-31 03:23:13 $
- * $Revision: 1.7 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/lib/fribidi-unicode.h,v $
- *
  * Author:
  *   Behdad Esfahbod, 2001, 2002, 2004
  *
@@ -43,13 +37,12 @@
 #define FRIBIDI_UNICODE_CHARS	(sizeof(FriBidiChar) >= 4 ? 0x110000 : 0xFFFE)
 
 /* Unicode version - FRIBIDI_UNICODE_VERSION */
-#if DONT_HAVE_FRIBIDI_UNICODE_VERSION_H+0
+#ifdef DONT_HAVE_FRIBIDI_UNICODE_VERSION_H
 # define FRIBIDI_UNICODE_VERSION "unknown"
 #else /* !DONT_HAVE_FRIBIDI_UNICODE_VERSION_H */
 # include "fribidi-unicode-version.h"
 #endif /* !DONT_HAVE_FRIBIDI_UNICODE_VERSION_H */
 
-#define fribidi_unicode_version FRIBIDI_NAMESPACE(unicode_version)
 /* An string containing the version the Unicode standard implemented,
  * in the form of "x.y.z", or "unknown". */
 extern const char *fribidi_unicode_version;

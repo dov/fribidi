@@ -1,12 +1,6 @@
 /* FriBidi
  * fribidi-run.c - text run data type
  *
- * $Id: fribidi-run.c,v 1.8 2006-01-31 03:23:13 behdad Exp $
- * $Author: behdad $
- * $Date: 2006-01-31 03:23:13 $
- * $Revision: 1.8 $
- * $Source: /home/behdad/src/fdo/fribidi/togit/git/../fribidi/fribidi2/lib/fribidi-run.c,v $
- *
  * Authors:
  *   Behdad Esfahbod, 2001, 2002, 2004
  *   Dov Grobgeld, 1999, 2000, 2017
@@ -137,8 +131,8 @@ run_list_encode_bidi_types (
         bracket_type = bracket_types[i];
       
       if (char_type != last->type
-          || bracket_type.bracket_id > 0 /* Always separate bracket into single char runs! */
-          || last->bracket_type.bracket_id > 0
+          || bracket_type != FRIBIDI_NO_BRACKET /* Always separate bracket into single char runs! */
+          || last->bracket_type != FRIBIDI_NO_BRACKET
           || FRIBIDI_IS_ISOLATE(char_type)
           )
 	{
@@ -275,7 +269,7 @@ shadow_run_list (
 	/* r needed? */
 	if (r->pos + r->len > pos2)
 	  {
-	    /* cut the begining of r. */
+	    /* cut the beginning of r. */
 	    r->len = r->pos + r->len - pos2;
 	    r->pos = pos2;
 	  }
@@ -311,7 +305,7 @@ out:
   return status;
 }
 
-#if DEBUG+0
+#ifdef DEBUG
 
 void
 fribidi_validate_run_list (
