@@ -637,4 +637,21 @@ run --debug line101.txt
 ** Comment
    - The ~bidi-type.tab.i~ wasn't rebuild by make clean, make, etc!
    - This solved all errors! Moving back to unicode-10.
-   
+* <2018-07-20 Fri>
+** Bug in character
+   - Got mail from Nico Rieck who spotted that I'm erronously skipping all the RTL tests. Turning these back on yields 18 errors!
+   - "Last error" (line 230): ~05D0 0029 0020 0028 0661 0029;0;0;1 1 1 1 2 1;5 4 3 2 1 0~
+     - No override characters!
+     - Probably the algo is missing the RTL influence of the second 0029 (LPAR), which should sandwhich the 2nd and 3rd characters to level 1!
+* <2018-07-22 Sun>
+** Continue investigate
+#+begin_src sh
+gdb BidiCharacterTest
+run line230.txt
+#+end_src
+  - It seems this fails because 05D0 is not recognized as strong! Why?
+  - Ok, the problems were the bracket property was not removed after N0. Resolved. :-)
+  - Down to 16 errors.
+  - Now have a compact block from lines 65-80
+  
+  

@@ -1,0 +1,73 @@
+env = Environment(CPPFLAGS=['-Wall','-g'])
+env.ParseConfig('pkg-config --cflags --libs glib-2.0')
+
+env.Append(CPPPATH = ['../../lib',
+                      '../..',  
+                      '../../charset'],
+           CPPDEFINES = ['HAVE_CONFIG_H=1',
+                         'DEBUG=1']
+           )
+
+lib = env.Library('fribidi',
+                  [
+                    '../../lib/fribidi-arabic.c',
+                    '../../lib/fribidi-bidi.c',
+                    '../../lib/fribidi-bidi-types.c',
+                    '../../lib/fribidi-brackets.c',
+                    '../../lib/fribidi.c',
+                    '../../lib/fribidi-char-sets.c',
+                    '../../lib/fribidi-char-sets-cap-rtl.c',
+                    '../../lib/fribidi-char-sets-cp1255.c',
+                    '../../lib/fribidi-char-sets-cp1256.c',
+                    '../../lib/fribidi-char-sets-iso8859-6.c',
+                    '../../lib/fribidi-char-sets-iso8859-8.c',
+                    '../../lib/fribidi-char-sets-utf8.c',
+                    '../../lib/fribidi-deprecated.c',
+                    '../../lib/fribidi-joining.c',
+                    '../../lib/fribidi-joining-types.c',
+                    '../../lib/fribidi-mirroring.c',
+                    '../../lib/fribidi-run.c',
+                    '../../lib/fribidi-shape.c',
+                    ]
+                    )
+env.Program('BidiTest',
+            ['BidiTest.c'] + lib,
+            )
+
+env.Program('BidiCharacterTest',
+            ['BidiCharacterTest.c'] + lib,
+            )
+
+#env.Program('test-bd16',
+#            ['bd16.c',
+#             'test-bd16.c'])
+#
+#env.Program('test-bd16-v1',
+#            ['bd16-v1.c',
+#             'test-bd16-v1.c'],
+#            CPPPATH=['../lib'] + env['CPPPATH'],
+#            CPPDEFINES=['HAVE_STRINGIZE=1',
+#                        'HAVE_STDINT_H=1'],
+#            LIBS = ['fribidi','glib-2.0'])
+#
+#env.Program('test-bracketing',
+#            ['test-bracketing.c',
+#             '../lib/fribidi-brackets.c'],
+#            CPPPATH=['../lib'] + env['CPPPATH'],
+#            CPPDEFINES=['HAVE_STRINGIZE=1',
+#                        'HAVE_STDINT_H=1']
+#            )
+#
+#env.Program('test-bidi-bracketing',
+#            ['test-bidi-bracketing.c'],
+#            CPPPATH=['../lib'] + env['CPPPATH'],
+#            CPPDEFINES=['HAVE_STRINGIZE=1',
+#                        'HAVE_STDINT_H=1']
+#            )
+#
+#env.Program('test-algo-n0',
+#            ['bd16.c',
+#             'algo-n0.c',
+#             'test-algo-n0.c'],
+#            )
+

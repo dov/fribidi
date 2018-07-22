@@ -96,15 +96,15 @@ class ResView(gtk.DrawingArea):
       x+= dx
 
     x,y = x1,y+dy
-    self.show_text(cr, 10,y, 'Order:')
-    for pos in self.order:
-      self.show_text(cr,x,y,str(pos),font='monospace 12',align=0.5)
-      x+= dx
-
-    x,y = x1,y+dy
     self.show_text(cr, 10,y, 'Level:')
     for v in self.level:
       self.show_text(cr,x,y,str(v),font='monospace 12', align=0.5)
+      x+= dx
+
+    x,y = x1,y+dy
+    self.show_text(cr, 10,y, 'Order:')
+    for pos in self.order:
+      self.show_text(cr,x,y,str(pos),font='monospace 12',align=0.5)
       x+= dx
 
   def set_res(self, TestString):
